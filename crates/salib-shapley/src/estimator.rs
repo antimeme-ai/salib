@@ -34,6 +34,8 @@
     clippy::too_many_arguments
 )]
 
+use std::fmt;
+
 use rand::RngCore;
 use salib_core::{tree_sum, tree_var, Distribution, RngState};
 
@@ -60,6 +62,20 @@ impl ShapleyIndices {
     #[must_use]
     pub fn k(&self) -> usize {
         self.sh.len()
+    }
+}
+
+impl fmt::Display for ShapleyIndices {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Shapley effects (k={}, perms={})", self.k(), self.n_perm)?;
+        writeln!(f, "  Var[Y] = {:.4}", self.var_y)?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}", "Factor", "Sh")?;
+        writeln!(f, "  {:>8}  {:>8}", "------", "------")?;
+        for i in 0..self.k() {
+            writeln!(f, "  {:>8}  {:>8.4}", i, self.sh[i])?;
+        }
+        Ok(())
     }
 }
 

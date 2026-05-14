@@ -62,6 +62,8 @@
     clippy::many_single_char_names
 )]
 
+use std::fmt;
+
 use nalgebra::{DMatrix, DVector};
 use ndarray::Array2;
 use salib_core::tree_sum;
@@ -171,6 +173,24 @@ impl SobolFromPce {
     #[must_use]
     pub fn d(&self) -> usize {
         self.first_order.len()
+    }
+}
+
+impl fmt::Display for SobolFromPce {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Sobol' indices from PCE (d={})", self.d())?;
+        writeln!(f, "  Var[Y] = {:.4}", self.total_variance)?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}", "Factor", "S1", "ST")?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}", "------", "------", "------")?;
+        for i in 0..self.d() {
+            writeln!(
+                f,
+                "  {:>8}  {:>8.4}  {:>8.4}",
+                i, self.first_order[i], self.total_order[i]
+            )?;
+        }
+        Ok(())
     }
 }
 

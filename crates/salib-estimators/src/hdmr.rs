@@ -36,6 +36,8 @@
 
 #![allow(clippy::similar_names, clippy::cast_precision_loss)]
 
+use std::fmt;
+
 use ndarray::Array2;
 use salib_core::Problem;
 use salib_surrogate::{fit_full_pce, norm_squared, PceError, PolynomialChaos, PolynomialFamily};
@@ -69,6 +71,27 @@ pub struct HdmrResult {
     pub total_order: Vec<f64>,
     /// The fitted PCE (for inspection/reuse).
     pub pce: PolynomialChaos,
+}
+
+impl fmt::Display for HdmrResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "HDMR decomposition (d={})", self.dim)?;
+        writeln!(f, "  Var[Y] = {:.4}", self.total_variance)?;
+        for (order, frac) in self.order_variance.iter().enumerate() {
+            writeln!(f, "  Order {} variance fraction: {:.4}", order + 1, frac)?;
+        }
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}", "Factor", "S1", "ST")?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}", "------", "------", "------")?;
+        for i in 0..self.dim {
+            writeln!(
+                f,
+                "  {:>8}  {:>8.4}  {:>8.4}",
+                i, self.first_order[i], self.total_order[i]
+            )?;
+        }
+        Ok(())
+    }
 }
 
 /// Errors from [`estimate_hdmr`].

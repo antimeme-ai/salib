@@ -22,6 +22,8 @@
 //! - Niederreiter, H. (1992). *Random Number Generation and
 //!   Quasi-Monte Carlo Methods*. SIAM.
 
+use std::fmt;
+
 use ndarray::Array2;
 use thiserror::Error;
 
@@ -48,6 +50,18 @@ pub enum DiscrepancyError {
     /// A sample value lies outside `[0, 1]`.
     #[error("sample values must be in [0, 1], found {0}")]
     NotUnitInterval(f64),
+}
+
+impl fmt::Display for DiscrepancyResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Discrepancy measures")?;
+        writeln!(f)?;
+        writeln!(f, "  CD   = {:.6}", self.centered)?;
+        writeln!(f, "  WD   = {:.6}", self.wrap_around)?;
+        writeln!(f, "  MD   = {:.6}", self.modified)?;
+        writeln!(f, "  L2*  = {:.6}", self.l2_star)?;
+        Ok(())
+    }
 }
 
 /// Compute all four discrepancy indices for `sample` (shape `N × d`,

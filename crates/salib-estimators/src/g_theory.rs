@@ -6,6 +6,8 @@
     clippy::too_many_lines
 )]
 
+use std::fmt;
+
 use ndarray::Array3;
 use rand::RngCore;
 use salib_core::RngState;
@@ -133,6 +135,24 @@ pub struct DStudyPoint {
     pub n_raters: usize,
     pub g_coefficient: f64,
     pub phi_coefficient: f64,
+}
+
+impl fmt::Display for GTheoryResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "G-theory (p x i x r)")?;
+        writeln!(f)?;
+        writeln!(f, "  Variance components:")?;
+        writeln!(f, "    \u{03c3}\u{00b2}(p)   = {:.4}", self.sigma_p)?;
+        writeln!(f, "    \u{03c3}\u{00b2}(i)   = {:.4}", self.sigma_i)?;
+        writeln!(f, "    \u{03c3}\u{00b2}(r)   = {:.4}", self.sigma_r)?;
+        writeln!(f, "    \u{03c3}\u{00b2}(pi)  = {:.4}", self.sigma_pi)?;
+        writeln!(f, "    \u{03c3}\u{00b2}(pr)  = {:.4}", self.sigma_pr)?;
+        writeln!(f, "    \u{03c3}\u{00b2}(ir)  = {:.4}", self.sigma_ir)?;
+        writeln!(f, "    \u{03c3}\u{00b2}(pir) = {:.4}", self.sigma_pir)?;
+        writeln!(f)?;
+        writeln!(f, "  G = {:.4}  \u{03a6} = {:.4}", self.g_coefficient, self.phi_coefficient)?;
+        Ok(())
+    }
 }
 
 pub fn estimate_g_theory_pir(

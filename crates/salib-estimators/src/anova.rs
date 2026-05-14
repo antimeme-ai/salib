@@ -17,6 +17,8 @@
     clippy::too_many_lines
 )]
 
+use std::fmt;
+
 use ndarray::{Array2, Array3};
 use rand::RngCore;
 use salib_core::RngState;
@@ -121,6 +123,40 @@ pub struct AnovaThreeWayResult {
     pub variance_fraction_ci_high: Option<Vec<f64>>,
     pub bootstrap_iterations: Option<usize>,
     pub bootstrap_alpha: Option<f64>,
+}
+
+impl fmt::Display for AnovaTwoWayResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Two-way ANOVA")?;
+        writeln!(f)?;
+        writeln!(f, "  {:>14}  {:>10}  {:>10}  {:>10}  {:>10}", "Source", "SS", "MS", "F", "p")?;
+        writeln!(f, "  {:>14}  {:>10}  {:>10}  {:>10}  {:>10}", "-----------", "--------", "--------", "--------", "--------")?;
+        let fmt_opt = |v: Option<f64>| v.map_or("       ---".to_string(), |x| format!("{x:>10.4}"));
+        writeln!(f, "  {:>14}  {:>10.4}  {:>10.4}  {}  {}", "Row", self.v_row, self.ms_row, fmt_opt(self.f_row), fmt_opt(self.p_row))?;
+        writeln!(f, "  {:>14}  {:>10.4}  {:>10.4}  {}  {}", "Column", self.v_column, self.ms_column, fmt_opt(self.f_column), fmt_opt(self.p_column))?;
+        writeln!(f, "  {:>14}  {:>10.4}  {:>10.4}  {}  {}", "Interaction", self.v_interaction, self.ms_interaction, fmt_opt(self.f_interaction), fmt_opt(self.p_interaction))?;
+        writeln!(f, "  {:>14}  {:>10.4}  {:>10.4}", "Residual", self.v_residual, self.ms_residual)?;
+        Ok(())
+    }
+}
+
+impl fmt::Display for AnovaThreeWayResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Three-way ANOVA")?;
+        writeln!(f)?;
+        writeln!(f, "  {:>20}  {:>10}  {:>10}  {:>10}  {:>10}", "Source", "SS", "MS", "F", "p")?;
+        writeln!(f, "  {:>20}  {:>10}  {:>10}  {:>10}  {:>10}", "-----------------", "--------", "--------", "--------", "--------")?;
+        let fmt_opt = |v: Option<f64>| v.map_or("       ---".to_string(), |x| format!("{x:>10.4}"));
+        writeln!(f, "  {:>20}  {:>10.4}  {:>10.4}  {}  {}", "Data", self.v_data, self.ms_data, fmt_opt(self.f_data), fmt_opt(self.p_data))?;
+        writeln!(f, "  {:>20}  {:>10.4}  {:>10.4}  {}  {}", "Brittleness", self.v_brittleness, self.ms_brittleness, fmt_opt(self.f_brittleness), fmt_opt(self.p_brittleness))?;
+        writeln!(f, "  {:>20}  {:>10.4}  {:>10.4}  {}  {}", "Inference", self.v_inference, self.ms_inference, fmt_opt(self.f_inference), fmt_opt(self.p_inference))?;
+        writeln!(f, "  {:>20}  {:>10.4}  {:>10.4}  {}  {}", "Data*Brittleness", self.v_data_brittleness, self.ms_data_brittleness, fmt_opt(self.f_data_brittleness), fmt_opt(self.p_data_brittleness))?;
+        writeln!(f, "  {:>20}  {:>10.4}  {:>10.4}  {}  {}", "Data*Inference", self.v_data_inference, self.ms_data_inference, fmt_opt(self.f_data_inference), fmt_opt(self.p_data_inference))?;
+        writeln!(f, "  {:>20}  {:>10.4}  {:>10.4}  {}  {}", "Britt*Inference", self.v_brittleness_inference, self.ms_brittleness_inference, fmt_opt(self.f_brittleness_inference), fmt_opt(self.p_brittleness_inference))?;
+        writeln!(f, "  {:>20}  {:>10.4}  {:>10.4}  {}  {}", "D*B*I", self.v_data_brittleness_inference, self.ms_data_brittleness_inference, fmt_opt(self.f_data_brittleness_inference), fmt_opt(self.p_data_brittleness_inference))?;
+        writeln!(f, "  {:>20}  {:>10.4}  {:>10.4}", "Residual", self.v_residual, self.ms_residual)?;
+        Ok(())
+    }
 }
 
 pub fn estimate_anova_two_way(grid: &Array2<f64>) -> Result<AnovaTwoWayResult, AnovaError> {
