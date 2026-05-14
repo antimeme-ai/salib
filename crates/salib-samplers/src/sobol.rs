@@ -76,6 +76,7 @@ const RES: u32 = 32;
 /// (21,201 dims) when needed; the data file is already documented in
 /// the upstream Joe-Kuo distribution.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 #[non_exhaustive]
 #[serde(tag = "kind")]
 pub enum SobolDimSet {
@@ -105,6 +106,7 @@ impl SobolDimSet {
 /// `#[non_exhaustive]` — future fields (`scrambling: SobolScrambling`
 /// for Owen-hash scrambling per Burley 2020) land non-breaking.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 #[non_exhaustive]
 pub struct SobolSampler {
     /// Output column count.

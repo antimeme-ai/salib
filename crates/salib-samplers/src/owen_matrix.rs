@@ -55,6 +55,7 @@ use crate::sampler::Sampler;
 /// `#[non_exhaustive]` — future fields (`recorded_rng_state` for
 /// audit replay) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct OwenMatrix {
     /// Number of samples per matrix.

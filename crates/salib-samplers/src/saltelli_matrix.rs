@@ -55,6 +55,7 @@ use crate::sampler::Sampler;
 /// — future fields (e.g., the recorded pre-draw `RngState` for
 /// audit-replay) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct SaltelliMatrix {
     /// Sample size (rows in each matrix).

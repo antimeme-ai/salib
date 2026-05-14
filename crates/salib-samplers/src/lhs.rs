@@ -47,6 +47,7 @@ use crate::sampler::Sampler;
 /// `Replicated` (multiple independent LHS draws). Each lands via
 /// follow-on ADRs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 #[non_exhaustive]
 #[serde(tag = "kind")]
 pub enum LhsKind {
@@ -64,6 +65,7 @@ pub enum LhsKind {
 /// struct-literal construction; future fields (e.g., `n_replications`
 /// for replicated LHS) land non-breaking.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 #[non_exhaustive]
 pub struct LhsSampler {
     /// Number of factors (output columns).

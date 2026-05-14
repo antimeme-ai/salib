@@ -48,6 +48,7 @@ use salib_core::{Group, RngState};
 /// `RngState` for audit-replay; `kind: MorrisKind` if Campolongo
 /// lands) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct MorrisTrajectories {
     /// `(R, d+1, d)` array of points. `trajectories[[r, k, j]]` is

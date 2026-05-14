@@ -12,6 +12,7 @@ use thiserror::Error;
 
 /// A Plackett-Burman two-level design matrix.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PlackettBurmanDesign {
     /// N × d matrix with entries in {-1.0, +1.0}.
     pub matrix: Array2<f64>,

@@ -71,6 +71,7 @@ use salib_core::RngState;
 /// audit replay, `kind: FastKind` if classical Cukier lands,
 /// `random_phase: bool` config echo) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct FastDesign {
     /// `(n_per_factor · d, d)` row-major sample matrix. Rows
