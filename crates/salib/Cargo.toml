@@ -23,6 +23,11 @@ salib-estimators = { version = "0.1.0", path = "../salib-estimators", optional =
 salib-surrogate = { version = "0.1.0", path = "../salib-surrogate", optional = true }
 salib-shapley = { version = "0.1.0", path = "../salib-shapley", optional = true }
 salib-validation = { version = "0.1.0", path = "../salib-validation", optional = true }
+arrow = { version = "54", optional = true, default-features = false, features = ["ffi"] }
+polars = { version = "0.46", optional = true, default-features = false, features = ["lazy"] }
+
+[dev-dependencies]
+serde_json = "1"
 
 [features]
 default = ["samplers", "estimators", "parallel"]
@@ -39,6 +44,8 @@ serde = [
     "salib-shapley?/serde",
     "salib-validation?/serde",
 ]
+arrow = ["dep:arrow"]
+polars = ["dep:polars", "arrow"]
 full = ["samplers", "estimators", "surrogate", "shapley", "validation"]
 
 [lints]

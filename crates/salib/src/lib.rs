@@ -17,3 +17,6 @@ pub use salib_shapley as shapley;
 
 #[cfg(feature = "validation")]
 pub use salib_validation as validation;
+
+#[cfg(any(feature = "arrow", feature = "polars"))]
+pub mod convert;
