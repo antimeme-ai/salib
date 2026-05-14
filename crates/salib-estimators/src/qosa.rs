@@ -104,6 +104,7 @@ use crate::borgonovo::{class_count, ordinal_ranks};
 /// `#[non_exhaustive]` — future fields (`bootstrap_ci`, per-factor
 /// realized class count) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct QosaIndices {
     /// QOSA index per factor, length `d`. Clamped to `[0, 1]`

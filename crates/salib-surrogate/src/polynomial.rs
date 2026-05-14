@@ -47,6 +47,7 @@
 /// Krawtchouk for Binomial) land non-breaking via follow-on PRs
 /// when discrete-input PCE is needed.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum PolynomialFamily {
     /// Legendre `Pₙ(x)` on `[-1, 1]`. Orthogonal w.r.t. uniform

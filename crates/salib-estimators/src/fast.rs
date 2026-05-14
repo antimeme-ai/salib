@@ -62,6 +62,7 @@ use salib_samplers::FastDesign;
 /// echo for audit, `total_variance` for downstream GUM contribution)
 /// land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct FastIndices {
     /// First-order Sobol' indices, length `d`. `s[i]` is the

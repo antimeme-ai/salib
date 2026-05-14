@@ -66,6 +66,7 @@ use salib_samplers::OwenMatrix;
 ///
 /// `#[non_exhaustive]` — future fields land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct OwenIndices {
     /// First-order Sobol' indices, length `d`.

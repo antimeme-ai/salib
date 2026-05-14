@@ -46,6 +46,7 @@ use thiserror::Error;
 /// Contains the fitted PCE, first- and second-order Sobol' indices,
 /// total-order indices, and per-interaction-order variance fractions.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct HdmrResult {
     /// Factor count `d`.

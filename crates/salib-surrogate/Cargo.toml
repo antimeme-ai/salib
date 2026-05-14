@@ -21,6 +21,11 @@ nalgebra = "0.33"
 # `ndarray` for `(N, d)` sample matrix shape.
 ndarray = "0.16"
 thiserror = "2"
+serde = { version = "1", features = ["derive"], optional = true }
+
+[features]
+default = []
+serde = ["dep:serde"]
 
 [dev-dependencies]
 # For end-to-end Ishigami contract close at PR 16b: Sobol' QMC base

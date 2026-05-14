@@ -82,6 +82,7 @@ use salib_samplers::SaltelliMatrix;
 /// `#[non_exhaustive]` — future fields (`bootstrap_ci`,
 /// `total_variance` for downstream GUM) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct JanonIndices {
     /// First-order Sobol' indices, length `d`. Asymptotically

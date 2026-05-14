@@ -103,6 +103,7 @@ pub type BoxedEstimatorError = Box<dyn StdError + Send + Sync>;
 ///
 /// `#[non_exhaustive]` — future fields land non-breaking.
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct BootstrapCi {
     /// Lower CI bound per factor — the `α/2` percentile of the

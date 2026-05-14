@@ -21,6 +21,7 @@ use salib_samplers::PlackettBurmanDesign;
 
 /// Results of a fractional factorial screening analysis.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FractionalFactorialEffects {
     /// Number of factors.
     pub dim: usize,

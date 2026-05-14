@@ -33,6 +33,7 @@
 /// `#[non_exhaustive]` — future fields (e.g., `cached_norm_squared`
 /// for performance) land non-breaking.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct MultiIndex {
     /// Per-factor polynomial degrees. Length equals factor count `d`.

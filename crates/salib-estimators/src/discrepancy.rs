@@ -27,6 +27,7 @@ use thiserror::Error;
 
 /// Discrepancy results for a sample matrix in `[0, 1]^d`.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DiscrepancyResult {
     /// Centered discrepancy (Hickernell 1998 Eq 3.8).
     pub centered: f64,

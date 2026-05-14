@@ -54,6 +54,7 @@ use salib_samplers::SaltelliMatrix;
 ///
 /// `#[non_exhaustive]` — future fields land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct JansenIndices {
     /// First-order Sobol' indices, length `d`. Computed via the

@@ -63,6 +63,7 @@ use salib_core::tree_sum;
 /// `#[non_exhaustive]` — future fields (`bootstrap_ci`, `n_slices`
 /// echo, `total_variance`) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct PawnIndices {
     /// Median KS across slices (Pianosi-Wagener 2018 default).

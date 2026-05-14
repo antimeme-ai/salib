@@ -75,6 +75,7 @@ use crate::polynomial::{evaluate, is_in_canonical_domain, norm_squared, Polynomi
 /// `condition_number` for ill-conditioning detection,
 /// `loo_error` for cross-validation) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct PolynomialChaos {
     /// Coefficients `{β_α}`, length `P`. Aligned with `multi_indices`.

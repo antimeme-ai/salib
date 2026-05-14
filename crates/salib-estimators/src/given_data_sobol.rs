@@ -69,6 +69,7 @@ use salib_core::tree_sum;
 /// `#[non_exhaustive]` — future fields (`bootstrap_ci`, total-order
 /// extension if a literature-vetted variant lands) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct GivenDataSobolIndices {
     /// First-order Sobol' index per factor, length `d`. Clamped to

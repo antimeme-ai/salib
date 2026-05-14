@@ -82,6 +82,7 @@ use salib_core::tree_sum;
 /// `bias_reduced` flag, `total_variance` echo for downstream GUM
 /// contribution) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct BorgonovoIndices {
     /// Borgonovo δ per factor, length `d`. `δᵢ ∈ [0, 1]`.

@@ -468,6 +468,8 @@ dependencies = [
  "salib-surrogate",
  "salib-tck",
  "salib-validation",
+ "serde",
+ "serde_json",
  "statrs",
  "thiserror",
 ]
@@ -508,6 +510,7 @@ dependencies = [
  "salib-core",
  "salib-tck",
  "salib-validation",
+ "serde",
  "thiserror",
 ]
 

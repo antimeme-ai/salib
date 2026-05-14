@@ -11,6 +11,7 @@
 /// `#[non_exhaustive]` — future fields (`dummy_floor: Option<f64>`,
 /// etc.) land non-breaking.
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct SobolIndices {
     /// Sample size used in the estimate (rows in each `SaltelliMatrix`
@@ -58,6 +59,7 @@ impl SobolIndices {
 ///
 /// `#[non_exhaustive]`.
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct SobolIndicesWithCi {
     /// Point-estimate indices on the original (non-bootstrapped) data.
@@ -80,6 +82,7 @@ pub struct SobolIndicesWithCi {
 /// default but the percentile method is sufficient for PR 7's
 /// reviewer-affordance contract close.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum BootstrapMethod {
     /// Naive percentile bootstrap CI: take `α/2` and `1 - α/2`

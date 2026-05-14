@@ -62,6 +62,7 @@ use salib_core::tree_sum;
 /// extension if a literature-vetted RBD total-order lands) land
 /// non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct RbdFastIndices {
     /// First-order Sobol' indices, length `d`. Plischke-corrected;

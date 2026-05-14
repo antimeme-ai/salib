@@ -59,6 +59,7 @@ pub enum AnovaBootstrapError {
 
 /// Balanced `A x B` ANOVA result.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct AnovaTwoWayResult {
     pub v_row: f64,
@@ -83,6 +84,7 @@ pub struct AnovaTwoWayResult {
 
 /// Balanced `A x B x C` ANOVA result.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct AnovaThreeWayResult {
     pub v_data: f64,

@@ -14,6 +14,7 @@ use crate::bootstrap::percentile_ci;
 use crate::bootstrap_given_data::{BootstrapCi, BootstrapGivenDataError};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum GTheoryDesign {
     Crossed,
@@ -59,6 +60,7 @@ pub enum GTheoryBootstrapError {
 }
 
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct GTheoryResult {
     pub sigma_p: f64,
@@ -125,6 +127,7 @@ impl GTheoryResult {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DStudyPoint {
     pub n_items: usize,
     pub n_raters: usize,

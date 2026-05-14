@@ -61,6 +61,7 @@ use salib_core::tree_sum;
 /// `condition_number` of the design matrix for ill-conditioning
 /// detection) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct RegressionIndices {
     /// Standardized regression coefficients, length `d`. Trust if

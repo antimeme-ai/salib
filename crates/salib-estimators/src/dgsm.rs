@@ -82,6 +82,7 @@ use salib_core::{tree_sum, Distribution};
 /// `#[non_exhaustive]` — future fields (`bootstrap_ci`, raw `nu`
 /// std for diagnostic, factor-of-influence flag) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct DgsmIndices {
     /// `νᵢ = E[(∂f/∂xᵢ)²]` per factor. Always `≥ 0`.
@@ -200,6 +201,7 @@ pub fn estimate_dgsm(
 
 /// Finite-difference scheme.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum FdKind {
     /// `(f(x + ε·eᵢ) − f(x)) / ε` — `O(ε)` error, `N·d` extra

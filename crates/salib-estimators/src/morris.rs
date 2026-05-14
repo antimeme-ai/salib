@@ -70,6 +70,7 @@ pub enum EmptyError {
 /// `#[non_exhaustive]` — future fields (e.g., per-factor R count if
 /// trajectories visit factors unevenly) land non-breaking.
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct MorrisEffects {
     /// Number of trajectories used.
