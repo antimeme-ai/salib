@@ -1,6 +1,6 @@
 [package]
 name = "salib-core"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
@@ -43,7 +43,7 @@ thiserror = "2"
 # Outer Gherkin TCK harness — feature files under
 # `tck/saltelli/{rng-determinism,problem}/features/` are wired
 # against `salib_tck::gherkin::SyncRunner`.
-salib-tck = { version = "0.1.0", path = "../salib-tck" }
+salib-tck = { version = "0.1.1", path = "../salib-tck" }
 
 [lints]
 workspace = true

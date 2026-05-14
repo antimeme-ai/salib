@@ -1,6 +1,6 @@
 [package]
 name = "salib-samplers"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
@@ -14,7 +14,7 @@ Halton, Saltelli (A, B, A_Bi), Morris trajectories, FAST/eFAST/RBD-FAST.
 path = "src/lib.rs"
 
 [dependencies]
-salib-core = { version = "0.1.0", path = "../salib-core" }
+salib-core = { version = "0.1.1", path = "../salib-core" }
 
 # Sample matrices live in `ndarray::Array2<f64>` row-major. Per
 # canonical math storage; salib-samplers is the inflection point
@@ -37,10 +37,10 @@ thiserror = "2"
 
 [dev-dependencies]
 # Outer Gherkin TCK harness.
-salib-tck = { version = "0.1.0", path = "../salib-tck" }
+salib-tck = { version = "0.1.1", path = "../salib-tck" }
 # PR 19b Iman-Conover e2e drives correlated-input Sobol' demonstrations
 # through `salib-estimators::estimate_given_data_sobol`.
-salib-estimators = { version = "0.1.0", path = "../salib-estimators" }
+salib-estimators = { version = "0.1.1", path = "../salib-estimators" }
 
 [features]
 serde = ["ndarray/serde"]

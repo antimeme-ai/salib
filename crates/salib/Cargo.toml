@@ -1,6 +1,6 @@
 [package]
 name = "salib"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
@@ -17,12 +17,12 @@ categories = ["science", "mathematics"]
 path = "src/lib.rs"
 
 [dependencies]
-salib-core = { version = "0.1.0", path = "../salib-core" }
-salib-samplers = { version = "0.1.0", path = "../salib-samplers", optional = true }
-salib-estimators = { version = "0.1.0", path = "../salib-estimators", optional = true }
-salib-surrogate = { version = "0.1.0", path = "../salib-surrogate", optional = true }
-salib-shapley = { version = "0.1.0", path = "../salib-shapley", optional = true }
-salib-validation = { version = "0.1.0", path = "../salib-validation", optional = true }
+salib-core = { version = "0.1.1", path = "../salib-core" }
+salib-samplers = { version = "0.1.1", path = "../salib-samplers", optional = true }
+salib-estimators = { version = "0.1.1", path = "../salib-estimators", optional = true }
+salib-surrogate = { version = "0.1.1", path = "../salib-surrogate", optional = true }
+salib-shapley = { version = "0.1.1", path = "../salib-shapley", optional = true }
+salib-validation = { version = "0.1.1", path = "../salib-validation", optional = true }
 arrow = { version = "54", optional = true, default-features = false, features = ["ffi"] }
 polars = { version = "0.46", optional = true, default-features = false, features = ["lazy"] }
 

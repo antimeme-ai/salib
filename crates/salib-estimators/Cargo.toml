@@ -1,6 +1,6 @@
 [package]
 name = "salib-estimators"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
@@ -15,8 +15,8 @@ Borgonovo δ, PAWN, DGSM, regression (SRC/SRRC/PCC/PRCC), HDMR, and more.
 path = "src/lib.rs"
 
 [dependencies]
-salib-core = { version = "0.1.0", path = "../salib-core" }
-salib-samplers = { version = "0.1.0", path = "../salib-samplers" }
+salib-core = { version = "0.1.1", path = "../salib-core" }
+salib-samplers = { version = "0.1.1", path = "../salib-samplers" }
 ndarray = "0.16"
 rand = { version = "0.9", default-features = false }
 rand_chacha = { version = "0.9", default-features = false }
@@ -31,7 +31,7 @@ rustfft = "6"
 nalgebra = "0.33"
 statrs = "0.18"
 thiserror = "2"
-salib-surrogate = { version = "0.1.0", path = "../salib-surrogate", optional = true }
+salib-surrogate = { version = "0.1.1", path = "../salib-surrogate", optional = true }
 serde = { version = "1", features = ["derive"], optional = true }
 
 [features]
@@ -40,8 +40,8 @@ surrogate = ["dep:salib-surrogate"]
 serde = ["dep:serde", "salib-surrogate?/serde"]
 
 [dev-dependencies]
-salib-validation = { version = "0.1.0", path = "../salib-validation" }
-salib-tck = { version = "0.1.0", path = "../salib-tck" }
+salib-validation = { version = "0.1.1", path = "../salib-validation" }
+salib-tck = { version = "0.1.1", path = "../salib-tck" }
 serde_json = "1"
 
 [lints]

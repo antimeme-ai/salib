@@ -125,7 +125,7 @@ If you use salib in published research, please cite:
   author  = {{antimeme.ai}},
   title   = {salib: Global Sensitivity Analysis for Rust},
   url     = {https://github.com/antimeme-ai/salib},
-  version = {0.1.0},
+  version = {0.1.1},
   year    = {2026}
 }
 ```

@@ -1,6 +1,6 @@
 [package]
 name = "salib-shapley"
-version = "0.1.0"
+version = "0.1.1"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
@@ -14,7 +14,7 @@ Shapley effects estimator for global sensitivity analysis
 path = "src/lib.rs"
 
 [dependencies]
-salib-core = { version = "0.1.0", path = "../salib-core" }
+salib-core = { version = "0.1.1", path = "../salib-core" }
 rand = { version = "0.9", default-features = false }
 rand_chacha = { version = "0.9", default-features = false }
 thiserror = "2"
@@ -25,8 +25,8 @@ default = []
 serde = ["dep:serde"]
 
 [dev-dependencies]
-salib-validation = { version = "0.1.0", path = "../salib-validation" }
-salib-tck = { version = "0.1.0", path = "../salib-tck" }
+salib-validation = { version = "0.1.1", path = "../salib-validation" }
+salib-tck = { version = "0.1.1", path = "../salib-tck" }
 serde_json = "1"
 
 [lints]
