@@ -1605,7 +1605,7 @@ dependencies = [
 
 [[package]]
 name = "salib"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "arrow",
  "polars",
@@ -1620,7 +1620,7 @@ dependencies = [
 
 [[package]]
 name = "salib-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "salib-core",
  "salib-estimators",
@@ -1630,7 +1630,7 @@ dependencies = [
 
 [[package]]
 name = "salib-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "rand 0.9.4",
  "rand_chacha 0.9.0",
@@ -1645,7 +1645,7 @@ dependencies = [
 
 [[package]]
 name = "salib-estimators"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "nalgebra",
  "ndarray",
@@ -1665,7 +1665,7 @@ dependencies = [
 
 [[package]]
 name = "salib-samplers"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ndarray",
  "rand 0.9.4",
@@ -1681,7 +1681,7 @@ dependencies = [
 
 [[package]]
 name = "salib-shapley"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "rand 0.9.4",
  "rand_chacha 0.9.0",
@@ -1695,7 +1695,7 @@ dependencies = [
 
 [[package]]
 name = "salib-surrogate"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "nalgebra",
  "ndarray",
@@ -1711,11 +1711,11 @@ dependencies = [
 
 [[package]]
 name = "salib-tck"
-version = "0.1.0"
+version = "0.1.1"
 
 [[package]]
 name = "salib-validation"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "salib-core",
  "salib-tck",
