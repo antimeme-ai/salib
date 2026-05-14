@@ -1,8 +1,7 @@
 # salib
 
-Global sensitivity analysis for Rust. A port of Python's
-[SALib](https://salib.readthedocs.io/) built for correctness and
-reproducibility.
+Global sensitivity analysis for Rust, implemented from the primary
+literature. Bit-deterministic by construction.
 
 **Bit-deterministic**: identical `RngState` produces identical results
 regardless of thread count. Parallel reductions use a tree-structured

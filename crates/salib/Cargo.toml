@@ -8,7 +8,7 @@ repository.workspace = true
 description = """
 Global sensitivity analysis in Rust. Variance-based (Sobol'), Morris,
 FAST/eFAST/RBD-FAST, Borgonovo δ, PAWN, DGSM, regression (SRC/SRRC/PCC/PRCC),
-PCE surrogate, Shapley effects, and more. A Rust port of Python's SALib.
+PCE surrogate, Shapley effects, and more. Implemented from the primary literature.
 """
 keywords = ["sensitivity-analysis", "sobol", "morris", "uq", "global-sensitivity"]
 categories = ["science", "mathematics"]
