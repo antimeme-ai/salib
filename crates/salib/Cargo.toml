@@ -32,6 +32,13 @@ surrogate = ["dep:salib-surrogate", "salib-estimators?/surrogate"]
 shapley = ["dep:salib-shapley"]
 validation = ["dep:salib-validation"]
 parallel = ["salib-core/parallel"]
+serde = [
+    "salib-samplers?/serde",
+    "salib-estimators?/serde",
+    "salib-surrogate?/serde",
+    "salib-shapley?/serde",
+    "salib-validation?/serde",
+]
 full = ["samplers", "estimators", "surrogate", "shapley", "validation"]
 
 [lints]
