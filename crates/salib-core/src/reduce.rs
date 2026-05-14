@@ -47,6 +47,7 @@
 //! sums). Accepted for byte-exact reproducibility under the
 //! "pay-in-disk-not-speed" posture in `CLAUDE.md` § "Way of working."
 
+#[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
 /// Per-chunk size for the parallel block-then-tree reduction. Fixed;
@@ -96,7 +97,10 @@ pub fn par_tree_sum(xs: &[f64]) -> f64 {
     if xs.len() <= BLOCK {
         return tree_sum(xs);
     }
+    #[cfg(feature = "parallel")]
     let block_sums: Vec<f64> = xs.par_chunks(BLOCK).map(tree_sum).collect();
+    #[cfg(not(feature = "parallel"))]
+    let block_sums: Vec<f64> = xs.chunks(BLOCK).map(tree_sum).collect();
     tree_sum(&block_sums)
 }
 
@@ -124,9 +128,16 @@ pub fn par_tree_dot(a: &[f64], b: &[f64]) -> f64 {
     if a.len() <= BLOCK {
         return tree_dot(a, b);
     }
+    #[cfg(feature = "parallel")]
     let block_sums: Vec<f64> = a
         .par_chunks(BLOCK)
         .zip(b.par_chunks(BLOCK))
+        .map(|(ac, bc)| tree_dot(ac, bc))
+        .collect();
+    #[cfg(not(feature = "parallel"))]
+    let block_sums: Vec<f64> = a
+        .chunks(BLOCK)
+        .zip(b.chunks(BLOCK))
         .map(|(ac, bc)| tree_dot(ac, bc))
         .collect();
     tree_sum(&block_sums)
@@ -173,8 +184,17 @@ pub fn par_tree_var(xs: &[f64]) -> f64 {
     #[allow(clippy::cast_precision_loss)]
     let n_f = n as f64;
     let mean = par_tree_sum(xs) / n_f;
+    #[cfg(feature = "parallel")]
     let centered_sq: Vec<f64> = xs
         .par_iter()
+        .map(|&x| {
+            let d = x - mean;
+            d * d
+        })
+        .collect();
+    #[cfg(not(feature = "parallel"))]
+    let centered_sq: Vec<f64> = xs
+        .iter()
         .map(|&x| {
             let d = x - mean;
             d * d
@@ -657,5 +677,30 @@ mod tests {
             (lhs - rhs).abs() <= 1e-9 * lhs.abs().max(rhs.abs()),
             "lhs={lhs} rhs={rhs}"
         );
+    }
+
+    #[test]
+    fn serial_par_parity_sum() {
+        let data: Vec<f64> = (0..10_000).map(|i| (i as f64) * 0.0001).collect();
+        let serial = tree_sum(&data);
+        let parallel = par_tree_sum(&data);
+        assert_eq!(serial.to_bits(), parallel.to_bits());
+    }
+
+    #[test]
+    fn serial_par_parity_dot() {
+        let a: Vec<f64> = (0..10_000).map(|i| (i as f64) * 0.0001).collect();
+        let b: Vec<f64> = (0..10_000).map(|i| 1.0 - (i as f64) * 0.00005).collect();
+        let serial = tree_dot(&a, &b);
+        let parallel = par_tree_dot(&a, &b);
+        assert_eq!(serial.to_bits(), parallel.to_bits());
+    }
+
+    #[test]
+    fn serial_par_parity_var() {
+        let data: Vec<f64> = (0..10_000).map(|i| (i as f64) * 0.0001).collect();
+        let serial = tree_var(&data);
+        let parallel = par_tree_var(&data);
+        assert_eq!(serial.to_bits(), parallel.to_bits());
     }
 }

@@ -8,8 +8,12 @@
 //! Layer 1 (outer
 //! Gherkin TCK) and
 //! § "Tree-fold reductions and the float-associativity defense."
+//!
+//! This file is only compiled when the `parallel` feature is enabled,
+//! since it exercises rayon thread-pool invariance directly.
 
 #![allow(clippy::unwrap_used, clippy::expect_used)]
+#![cfg(feature = "parallel")]
 
 use std::path::PathBuf;
 

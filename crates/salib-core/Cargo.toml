@@ -13,13 +13,17 @@ Foundational types for salib: Problem, Factor, Distribution, RngState
 [lib]
 path = "src/lib.rs"
 
+[features]
+default = ["parallel"]
+parallel = ["dep:rayon"]
+
 [dependencies]
 # Determinism foundation — RNG + reductions.
 rand = { version = "0.9", default-features = false }
 rand_chacha = { version = "0.9", default-features = false }
 sha2 = { version = "0.10", default-features = false }
 serde = { version = "1", features = ["derive"] }
-rayon = "1"
+rayon = { version = "1", optional = true }
 
 # Distribution inverse-CDFs (Normal / LogNormal / Beta / Gamma) —
 # closed-form not available; statrs provides Newton-converged

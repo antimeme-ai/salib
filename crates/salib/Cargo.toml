@@ -25,12 +25,13 @@ salib-shapley = { version = "0.1.0", path = "../salib-shapley", optional = true 
 salib-validation = { version = "0.1.0", path = "../salib-validation", optional = true }
 
 [features]
-default = ["samplers", "estimators"]
+default = ["samplers", "estimators", "parallel"]
 samplers = ["dep:salib-samplers"]
 estimators = ["dep:salib-estimators"]
 surrogate = ["dep:salib-surrogate", "salib-estimators?/surrogate"]
 shapley = ["dep:salib-shapley"]
 validation = ["dep:salib-validation"]
+parallel = ["salib-core/parallel"]
 full = ["samplers", "estimators", "surrogate", "shapley", "validation"]
 
 [lints]
