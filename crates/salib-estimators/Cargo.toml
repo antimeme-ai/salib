@@ -40,7 +40,6 @@ surrogate = ["dep:salib-surrogate"]
 [dev-dependencies]
 salib-validation = { version = "0.1.0", path = "../salib-validation" }
 salib-tck = { version = "0.1.0", path = "../salib-tck" }
-salib-surrogate = { version = "0.1.0", path = "../salib-surrogate" }
 
 [lints]
 workspace = true

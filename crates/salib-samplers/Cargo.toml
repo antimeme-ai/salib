@@ -38,9 +38,6 @@ thiserror = "2"
 [dev-dependencies]
 # Outer Gherkin TCK harness.
 salib-tck = { version = "0.1.0", path = "../salib-tck" }
-# PR 19b Iman-Conover e2e drives correlated-input Sobol' demonstrations
-# through `salib-estimators::estimate_given_data_sobol`.
-salib-estimators = { version = "0.1.0", path = "../salib-estimators" }
 
 [lints]
 workspace = true
