@@ -65,6 +65,8 @@
 use std::fmt;
 
 use nalgebra::{DMatrix, DVector};
+use ndarray::ArrayView2;
+#[cfg(test)]
 use ndarray::Array2;
 use salib_core::tree_sum;
 
@@ -231,7 +233,7 @@ pub enum PceError {
 /// - [`PceError::SingularDesignMatrix`] if Cholesky on `Ψᵀ Ψ`
 ///   fails (typically near-collinearity in the basis).
 pub fn fit_full_pce(
-    samples_canonical: &Array2<f64>,
+    samples_canonical: ArrayView2<'_, f64>,
     y: &[f64],
     families: &[PolynomialFamily],
     max_degree: usize,
@@ -425,7 +427,7 @@ mod tests {
     fn zero_d_errors() {
         let x = Array2::<f64>::zeros((10, 0));
         let y = vec![0.0; 10];
-        let err = fit_full_pce(&x, &y, &[], 3).unwrap_err();
+        let err = fit_full_pce(x.view(), &y, &[], 3).unwrap_err();
         assert_eq!(err, PceError::ZeroD);
     }
 
@@ -433,7 +435,7 @@ mod tests {
     fn shape_mismatch_errors() {
         let x = Array2::<f64>::zeros((10, 3));
         let y = vec![0.0; 5];
-        let err = fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 3], 3).unwrap_err();
+        let err = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], 3).unwrap_err();
         assert!(matches!(err, PceError::ShapeMismatch { .. }));
     }
 
@@ -441,7 +443,7 @@ mod tests {
     fn families_dim_mismatch_errors() {
         let x = Array2::<f64>::zeros((20, 3));
         let y = vec![0.0; 20];
-        let err = fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 2], 2).unwrap_err();
+        let err = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 2], 2).unwrap_err();
         assert!(matches!(err, PceError::FamiliesDimMismatch { .. }));
     }
 
@@ -450,7 +452,7 @@ mod tests {
         // d=3, p=4 → P=35. N=20 is below.
         let x = Array2::<f64>::zeros((20, 3));
         let y = vec![0.0; 20];
-        let err = fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 3], 4).unwrap_err();
+        let err = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], 4).unwrap_err();
         assert!(matches!(err, PceError::InsufficientSamples { .. }));
     }
 
@@ -469,7 +471,7 @@ mod tests {
             x[[i, 1]] = v; // identical second column
         }
         let y: Vec<f64> = (0..n).map(|i| x[[i, 0]] + x[[i, 1]]).collect();
-        let err = fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 2], 3)
+        let err = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 2], 3)
             .expect_err("expected SingularDesignMatrix");
         assert_eq!(err, PceError::SingularDesignMatrix);
     }
@@ -482,7 +484,7 @@ mod tests {
         let n = 64;
         let x = linspace_unit_to_canonical(n, 2);
         let y = vec![7.0; n];
-        let pce = fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
+        let pce = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
         assert!(
             (pce.mean() - 7.0).abs() < 1e-10,
             "β_0 = {}, expected 7",
@@ -506,7 +508,7 @@ mod tests {
         let n = 128;
         let x = linspace_unit_to_canonical(n, 2);
         let y: Vec<f64> = (0..n).map(|i| 3.0 * x[[i, 0]]).collect();
-        let pce = fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
+        let pce = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
         // Find β at α = (1, 0).
         let target_idx = pce
             .multi_indices
@@ -528,7 +530,7 @@ mod tests {
         let n = 256;
         let x = linspace_unit_to_canonical(n, 2);
         let y: Vec<f64> = (0..n).map(|i| x[[i, 0]] * x[[i, 0]]).collect();
-        let pce = fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
+        let pce = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
         let beta_00 = pce.coefficients[pce
             .multi_indices
             .iter()
@@ -560,7 +562,7 @@ mod tests {
         let n = 256;
         let x = linspace_unit_to_canonical(n, 2);
         let y: Vec<f64> = (0..n).map(|i| x[[i, 0]] + 2.0 * x[[i, 1]]).collect();
-        let pce = fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
+        let pce = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
         let sobol = sobol_indices_from_pce(&pce).unwrap();
         assert!(
             (sobol.first_order[0] - 0.2).abs() < 1e-6,
@@ -589,7 +591,7 @@ mod tests {
         let y: Vec<f64> = (0..n)
             .map(|i| x[[i, 0]] + x[[i, 1]] + 0.5 * x[[i, 0]] * x[[i, 1]])
             .collect();
-        let pce = fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
+        let pce = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
         let sobol = sobol_indices_from_pce(&pce).unwrap();
         for i in 0..2 {
             assert!(
@@ -606,7 +608,7 @@ mod tests {
         let n = 256;
         let x = linspace_unit_to_canonical(n, 3);
         let y: Vec<f64> = (0..n).map(|i| x[[i, 0]] + x[[i, 1]] * x[[i, 2]]).collect();
-        let pce = fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 3], 3).unwrap();
+        let pce = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], 3).unwrap();
         let sobol = sobol_indices_from_pce(&pce).unwrap();
         for i in 0..3 {
             assert!((0.0..=1.0).contains(&sobol.first_order[i]));
@@ -621,8 +623,8 @@ mod tests {
         let n = 64;
         let x = linspace_unit_to_canonical(n, 2);
         let y: Vec<f64> = (0..n).map(|i| x[[i, 0]] + x[[i, 1]]).collect();
-        let a = fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
-        let b = fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
+        let a = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
+        let b = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
         assert_eq!(a.coefficients, b.coefficients);
     }
 
@@ -633,7 +635,7 @@ mod tests {
         let n = 128;
         let x = linspace_unit_to_canonical(n, 2);
         let y: Vec<f64> = (0..n).map(|i| x[[i, 0]] + 2.0 * x[[i, 1]]).collect();
-        let pce = fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
+        let pce = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 2], 3).unwrap();
         // Evaluate at training points should recover y to fit
         // tolerance (additive linear model is in span of degree-3
         // Legendre basis).

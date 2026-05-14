@@ -78,7 +78,7 @@ fn lhs_ishigami_inputs(n: usize) -> (Array2<f64>, Vec<f64>) {
 
 fn run_rbd_fast(n: usize) -> RbdFastIndices {
     let (x, y) = lhs_ishigami_inputs(n);
-    estimate_rbd_fast(&x, &y, HARMONIC).expect("estimate")
+    estimate_rbd_fast(x.view(), &y, HARMONIC).expect("estimate")
 }
 
 // ── Artifact 1: canonical analytic recovery ─────────────────────────

@@ -61,7 +61,7 @@ fn ishigami_qosa_at_median_orders_factors_like_first_order_sobol() {
     let n = 4096;
     let x = lhs_inputs(n, 3, -PI, PI);
     let y = ishigami_outputs(&x);
-    let result = estimate_qosa(&x, &y, 0.5).expect("QOSA fit");
+    let result = estimate_qosa(x.view(), &y, 0.5).expect("QOSA fit");
     // Ishigami first-order Sobol' ordering: S_2 (0.44) > S_1 (0.31) > S_3 (0).
     // QOSA at the median should land in the same ordering — even
     // though the magnitudes differ from Sobol'.
@@ -94,7 +94,7 @@ fn ishigami_qosa_global_diagnostics_are_finite_and_ordered() {
     let n = 4096;
     let x = lhs_inputs(n, 3, -PI, PI);
     let y = ishigami_outputs(&x);
-    let result = estimate_qosa(&x, &y, 0.9).expect("QOSA fit");
+    let result = estimate_qosa(x.view(), &y, 0.9).expect("QOSA fit");
     // CTE_α(Y) > F_Y^{-1}(α) by definition (CTE is the conditional
     // mean of values exceeding the quantile).
     assert!(
@@ -135,8 +135,8 @@ fn tail_alpha_correctly_identifies_tail_driver_over_median_driver() {
         })
         .collect();
 
-    let median = estimate_qosa(&x, &y, 0.5).expect("median QOSA");
-    let tail = estimate_qosa(&x, &y, 0.95).expect("tail QOSA");
+    let median = estimate_qosa(x.view(), &y, 0.5).expect("median QOSA");
+    let tail = estimate_qosa(x.view(), &y, 0.95).expect("tail QOSA");
 
     // At median, X_0 dominates.
     assert!(
@@ -171,8 +171,8 @@ fn ishigami_qosa_is_deterministic() {
     let n = 1024;
     let x = lhs_inputs(n, 3, -PI, PI);
     let y = ishigami_outputs(&x);
-    let a = estimate_qosa(&x, &y, 0.75).expect("a");
-    let b = estimate_qosa(&x, &y, 0.75).expect("b");
+    let a = estimate_qosa(x.view(), &y, 0.75).expect("a");
+    let b = estimate_qosa(x.view(), &y, 0.75).expect("b");
     assert_eq!(a.s, b.s);
     assert_eq!(a.global_quantile, b.global_quantile);
     assert_eq!(a.global_cte, b.global_cte);
@@ -185,6 +185,6 @@ fn invalid_alpha_propagates_through_e2e() {
     let n = 64;
     let x = lhs_inputs(n, 3, 0.0, 1.0);
     let y: Vec<f64> = (0..n).map(|k| x[[k, 0]]).collect();
-    let err = estimate_qosa(&x, &y, 1.5).unwrap_err();
+    let err = estimate_qosa(x.view(), &y, 1.5).unwrap_err();
     assert!(matches!(err, QosaError::InvalidAlpha { .. }));
 }

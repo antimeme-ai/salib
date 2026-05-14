@@ -228,7 +228,7 @@ fn iman_conover_feature_runs() {
                 let y: Vec<f64> = (0..n)
                     .map(|k| out[[k, 0]] + out[[k, 1]] + out[[k, 2]])
                     .collect();
-                let result = estimate_given_data_sobol(out, &y)
+                let result = estimate_given_data_sobol(out.view(), &y)
                     .map_err(|e| StepError::new(format!("Sobol: {e}")))?;
                 w.sobol = Some(result.s1);
                 Ok(())

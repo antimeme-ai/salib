@@ -19,7 +19,7 @@
 
 use std::fmt;
 
-use ndarray::{Array2, Array3};
+use ndarray::{Array2, Array3, ArrayView2, ArrayView3};
 use rand::RngCore;
 use salib_core::RngState;
 use statrs::distribution::{ContinuousCDF, FisherSnedecor};
@@ -159,7 +159,7 @@ impl fmt::Display for AnovaThreeWayResult {
     }
 }
 
-pub fn estimate_anova_two_way(grid: &Array2<f64>) -> Result<AnovaTwoWayResult, AnovaError> {
+pub fn estimate_anova_two_way(grid: ArrayView2<'_, f64>) -> Result<AnovaTwoWayResult, AnovaError> {
     let a = grid.nrows();
     let b = grid.ncols();
     if a < 2 {
@@ -240,7 +240,7 @@ pub fn estimate_anova_two_way(grid: &Array2<f64>) -> Result<AnovaTwoWayResult, A
     })
 }
 
-pub fn estimate_anova_three_way(grid: &Array3<f64>) -> Result<AnovaThreeWayResult, AnovaError> {
+pub fn estimate_anova_three_way(grid: ArrayView3<'_, f64>) -> Result<AnovaThreeWayResult, AnovaError> {
     let a = grid.shape()[0];
     let b = grid.shape()[1];
     let c = grid.shape()[2];
@@ -470,7 +470,7 @@ pub fn estimate_anova_three_way(grid: &Array3<f64>) -> Result<AnovaThreeWayResul
 }
 
 pub fn estimate_anova_two_way_with_bootstrap(
-    grid: &Array2<f64>,
+    grid: ArrayView2<'_, f64>,
     n_resamples: usize,
     alpha: f64,
     rng: &mut RngState,
@@ -485,7 +485,7 @@ pub fn estimate_anova_two_way_with_bootstrap(
 }
 
 pub fn estimate_anova_three_way_with_bootstrap(
-    grid: &Array3<f64>,
+    grid: ArrayView3<'_, f64>,
     n_resamples: usize,
     alpha: f64,
     rng: &mut RngState,
@@ -500,7 +500,7 @@ pub fn estimate_anova_three_way_with_bootstrap(
 }
 
 pub fn bootstrap_anova_two_way(
-    grid: &Array2<f64>,
+    grid: ArrayView2<'_, f64>,
     n_resamples: usize,
     alpha: f64,
     rng: &mut RngState,
@@ -530,7 +530,7 @@ pub fn bootstrap_anova_two_way(
                 resampled[[out_row, out_col]] = grid[[row_idx[out_row], col_idx[out_col]]];
             }
         }
-        match estimate_anova_two_way(&resampled) {
+        match estimate_anova_two_way(resampled.view()) {
             Ok(est) => {
                 let vals = [est.v_row, est.v_column, est.v_interaction, est.v_residual];
                 for (samples, value) in per_component.iter_mut().zip(vals) {
@@ -545,7 +545,7 @@ pub fn bootstrap_anova_two_way(
 }
 
 pub fn bootstrap_anova_three_way(
-    grid: &Array3<f64>,
+    grid: ArrayView3<'_, f64>,
     n_resamples: usize,
     alpha: f64,
     rng: &mut RngState,
@@ -583,7 +583,7 @@ pub fn bootstrap_anova_three_way(
                 }
             }
         }
-        match estimate_anova_three_way(&resampled) {
+        match estimate_anova_three_way(resampled.view()) {
             Ok(est) => {
                 let vals = [
                     est.v_data,
@@ -688,7 +688,7 @@ mod tests {
     fn two_way_zero_variance_errors() {
         let grid = arr2(&[[1.0, 1.0], [1.0, 1.0]]);
         assert_eq!(
-            estimate_anova_two_way(&grid).unwrap_err(),
+            estimate_anova_two_way(grid.view()).unwrap_err(),
             AnovaError::ZeroVariance
         );
     }
@@ -697,7 +697,7 @@ mod tests {
     fn three_way_degenerate_axis_errors() {
         let grid = ndarray::Array3::<f64>::zeros((1, 2, 2));
         assert_eq!(
-            estimate_anova_three_way(&grid).unwrap_err(),
+            estimate_anova_three_way(grid.view()).unwrap_err(),
             AnovaError::DegenerateAxis {
                 axis: "data",
                 len: 1,
@@ -709,7 +709,7 @@ mod tests {
     fn bootstrap_two_way_invalid_grid_errors_instead_of_nan_ci() {
         let grid = arr2(&[[1.0, 1.0], [1.0, 1.0]]);
         let mut rng = RngState::from_seed([0x33; 32]);
-        let err = bootstrap_anova_two_way(&grid, 32, 0.05, &mut rng).unwrap_err();
+        let err = bootstrap_anova_two_way(grid.view(), 32, 0.05, &mut rng).unwrap_err();
         assert_eq!(err, AnovaBootstrapError::Anova(AnovaError::ZeroVariance));
     }
 

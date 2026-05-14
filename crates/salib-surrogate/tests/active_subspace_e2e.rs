@@ -57,10 +57,10 @@ fn ridge_function_pipeline_recovers_rank_one_c_and_aligned_eigenvector() {
     // eigenvector ±a/||a|| = ±(0.6, 0, 0.8).
     let n = 32;
     let x = lhs_inputs(n, 3, -1.0, 1.0);
-    let gradients = finite_difference_gradients(&x, 1e-6, FdKind::Central, |x: &[f64]| {
+    let gradients = finite_difference_gradients(x.view(), 1e-6, FdKind::Central, |x: &[f64]| {
         3.0 * x[0] + 4.0 * x[2]
     });
-    let result = compute_active_subspace(&gradients, None).expect("active-subspace fit");
+    let result = compute_active_subspace(gradients.view(), None).expect("active-subspace fit");
 
     assert!(
         (result.eigenvalues[0] - 25.0).abs() < 1e-6,
@@ -110,10 +110,10 @@ fn ishigami_active_subspace_spectrum_reflects_per_factor_gradient_magnitudes() {
     // problem for first-order Sobol'.
     let n = 256;
     let x = lhs_inputs(n, 3, -PI, PI);
-    let gradients = finite_difference_gradients(&x, 1e-5, FdKind::Central, |xs: &[f64]| {
+    let gradients = finite_difference_gradients(x.view(), 1e-5, FdKind::Central, |xs: &[f64]| {
         ishigami::ishigami(xs)
     });
-    let result = compute_active_subspace(&gradients, None).expect("active-subspace fit");
+    let result = compute_active_subspace(gradients.view(), None).expect("active-subspace fit");
 
     // All three eigenvalues should be strictly positive — Ishigami
     // varies along every input.
@@ -152,11 +152,11 @@ fn ishigami_active_subspace_spectrum_reflects_per_factor_gradient_magnitudes() {
 #[test]
 fn active_subspace_is_deterministic() {
     let x = lhs_inputs(64, 3, -1.0, 1.0);
-    let gradients = finite_difference_gradients(&x, 1e-6, FdKind::Central, |xs: &[f64]| {
+    let gradients = finite_difference_gradients(x.view(), 1e-6, FdKind::Central, |xs: &[f64]| {
         xs[0] * xs[0] + 2.0 * xs[1] + xs[2].sin()
     });
-    let a = compute_active_subspace(&gradients, None).unwrap();
-    let b = compute_active_subspace(&gradients, None).unwrap();
+    let a = compute_active_subspace(gradients.view(), None).unwrap();
+    let b = compute_active_subspace(gradients.view(), None).unwrap();
     assert_eq!(a.eigenvalues, b.eigenvalues);
     for col in 0..3 {
         for row in 0..3 {

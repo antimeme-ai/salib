@@ -88,7 +88,7 @@ fn require_sobol(w: &World) -> Result<&SobolFromPce, StepError> {
 
 fn fit_pce(n: usize, p: usize) -> PolynomialChaos {
     let (x, y) = ishigami_canonical_inputs(n);
-    fit_full_pce(&x, &y, &[PolynomialFamily::Legendre; 3], p).expect("PCE fit")
+    fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], p).expect("PCE fit")
 }
 
 #[allow(clippy::too_many_lines)]

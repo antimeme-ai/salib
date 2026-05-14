@@ -85,7 +85,7 @@ fn anova_factorial_feature_runs() {
         )
         .step("I estimate two-way ANOVA components", |w, _| {
             w.two_way = Some(
-                estimate_anova_two_way(&two_way_grid())
+                estimate_anova_two_way(two_way_grid().view())
                     .map_err(|e| StepError::new(format!("two-way estimate: {e}")))?,
             );
             Ok(())
@@ -154,7 +154,7 @@ fn anova_factorial_feature_runs() {
         )
         .step("I estimate three-way ANOVA components", |w, _| {
             w.three_way = Some(
-                estimate_anova_three_way(&three_way_grid())
+                estimate_anova_three_way(three_way_grid().view())
                     .map_err(|e| StepError::new(format!("three-way estimate: {e}")))?,
             );
             Ok(())
@@ -164,7 +164,7 @@ fn anova_factorial_feature_runs() {
             |w, _| {
                 let mut rng = RngState::from_seed([0x22; 32]);
                 w.three_way = Some(
-                    estimate_anova_three_way_with_bootstrap(&three_way_grid(), 128, 0.05, &mut rng)
+                    estimate_anova_three_way_with_bootstrap(three_way_grid().view(), 128, 0.05, &mut rng)
                         .map_err(|e| {
                             StepError::new(format!("three-way bootstrap estimate: {e}"))
                         })?,

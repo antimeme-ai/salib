@@ -80,7 +80,7 @@ fn lhs_ishigami_inputs(n: usize) -> (Array2<f64>, Vec<f64>) {
 
 fn run_at_n(n: usize) -> PawnIndices {
     let (x, y) = lhs_ishigami_inputs(n);
-    estimate_pawn(&x, &y, N_SLICES).expect("estimate")
+    estimate_pawn(x.view(), &y, N_SLICES).expect("estimate")
 }
 
 // ── Artifact 1: identity / ranking ─────────────────────────────────
@@ -232,7 +232,7 @@ fn pawn_ishigami_ranking_invariant_to_reasonable_slice_count() {
     // within a reasonable range. Test S ∈ {8, 10, 16}.
     let (x, y) = lhs_ishigami_inputs(4096);
     for &s in &[8_usize, 10, 16] {
-        let est = estimate_pawn(&x, &y, s).expect("estimate");
+        let est = estimate_pawn(x.view(), &y, s).expect("estimate");
         assert!(
             est.median[1] > est.median[0],
             "S={s}: median_2 = {} should exceed median_1 = {}",

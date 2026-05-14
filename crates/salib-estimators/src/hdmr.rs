@@ -38,7 +38,7 @@
 
 use std::fmt;
 
-use ndarray::Array2;
+use ndarray::{Array2, ArrayView2};
 use salib_core::Problem;
 use salib_surrogate::{fit_full_pce, norm_squared, PceError, PolynomialChaos, PolynomialFamily};
 use thiserror::Error;
@@ -132,7 +132,7 @@ pub enum HdmrError {
 /// - [`HdmrError::PceFitFailed`] — delegated from `fit_full_pce`.
 /// - [`HdmrError::ZeroVariance`] — total PCE variance is zero.
 pub fn estimate_hdmr(
-    x: &Array2<f64>,
+    x: ArrayView2<'_, f64>,
     y: &[f64],
     problem: &Problem,
     max_order: usize,
@@ -184,7 +184,7 @@ pub fn estimate_hdmr(
     }
 
     // Fit PCE.
-    let pce = fit_full_pce(&x_canonical, y, &families, max_degree)?;
+    let pce = fit_full_pce(x_canonical.view(), y, &families, max_degree)?;
 
     // Per-basis-function variance contribution: β_α² · ∏_k ⟨Ψ_{α_k}, Ψ_{α_k}⟩
     let contributions: Vec<f64> = pce

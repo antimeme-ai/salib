@@ -55,6 +55,8 @@
 use std::cmp::Ordering;
 use std::fmt;
 
+use ndarray::ArrayView2;
+#[cfg(test)]
 use ndarray::Array2;
 use salib_core::tree_sum;
 
@@ -138,7 +140,7 @@ pub enum PawnError {
 /// - [`PawnError::TooFewSlices`] if `n_slices < 2`.
 /// - [`PawnError::InsufficientSamples`] if `N < 2 · n_slices`.
 pub fn estimate_pawn(
-    x: &Array2<f64>,
+    x: ArrayView2<'_, f64>,
     y: &[f64],
     n_slices: usize,
 ) -> Result<PawnIndices, PawnError> {
@@ -337,14 +339,14 @@ mod tests {
     fn zero_d_errors() {
         let x = Array2::<f64>::zeros((100, 0));
         let y = vec![0.0; 100];
-        assert_eq!(estimate_pawn(&x, &y, 10).unwrap_err(), PawnError::ZeroD);
+        assert_eq!(estimate_pawn(x.view(), &y, 10).unwrap_err(), PawnError::ZeroD);
     }
 
     #[test]
     fn shape_mismatch_errors() {
         let x = Array2::<f64>::zeros((100, 3));
         let y = vec![0.0; 50];
-        let err = estimate_pawn(&x, &y, 10).unwrap_err();
+        let err = estimate_pawn(x.view(), &y, 10).unwrap_err();
         assert!(matches!(err, PawnError::ShapeMismatch { .. }));
     }
 
@@ -353,7 +355,7 @@ mod tests {
         let x = synthetic_x(100, 3);
         let y = vec![0.0; 100];
         assert_eq!(
-            estimate_pawn(&x, &y, 1).unwrap_err(),
+            estimate_pawn(x.view(), &y, 1).unwrap_err(),
             PawnError::TooFewSlices { n_slices: 1 }
         );
     }
@@ -362,7 +364,7 @@ mod tests {
     fn insufficient_samples_errors() {
         let x = synthetic_x(15, 3);
         let y = vec![0.0; 15];
-        let err = estimate_pawn(&x, &y, 10).unwrap_err();
+        let err = estimate_pawn(x.view(), &y, 10).unwrap_err();
         assert!(matches!(err, PawnError::InsufficientSamples { .. }));
     }
 
@@ -373,7 +375,7 @@ mod tests {
         let n = 256;
         let x = synthetic_x(n, 5);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]]).collect();
-        let est = estimate_pawn(&x, &y, 10).unwrap();
+        let est = estimate_pawn(x.view(), &y, 10).unwrap();
         assert_eq!(est.d(), 5);
         assert_eq!(est.median.len(), 5);
         assert_eq!(est.maximum.len(), 5);
@@ -390,7 +392,7 @@ mod tests {
         let n = 256;
         let x = synthetic_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]] + 0.5 * x[[k, 1]]).collect();
-        let est = estimate_pawn(&x, &y, 10).unwrap();
+        let est = estimate_pawn(x.view(), &y, 10).unwrap();
         for i in 0..3 {
             assert!(
                 (0.0..=1.0).contains(&est.median[i]),
@@ -418,7 +420,7 @@ mod tests {
         let n = 256;
         let x = synthetic_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]] + x[[k, 1]] * x[[k, 2]]).collect();
-        let est = estimate_pawn(&x, &y, 10).unwrap();
+        let est = estimate_pawn(x.view(), &y, 10).unwrap();
         for i in 0..3 {
             assert!(
                 est.minimum[i] <= est.median[i] + 1e-12,
@@ -454,7 +456,7 @@ mod tests {
         let n = 512;
         let x = synthetic_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]]).collect();
-        let est = estimate_pawn(&x, &y, 10).unwrap();
+        let est = estimate_pawn(x.view(), &y, 10).unwrap();
         assert!(
             est.median[0] > est.median[1],
             "median_0 = {} should exceed median_1 = {}",
@@ -476,8 +478,8 @@ mod tests {
         let n = 64;
         let x = synthetic_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]] + x[[k, 1]] * x[[k, 2]]).collect();
-        let a = estimate_pawn(&x, &y, 8).unwrap();
-        let b = estimate_pawn(&x, &y, 8).unwrap();
+        let a = estimate_pawn(x.view(), &y, 8).unwrap();
+        let b = estimate_pawn(x.view(), &y, 8).unwrap();
         assert_eq!(a.median, b.median);
         assert_eq!(a.maximum, b.maximum);
     }

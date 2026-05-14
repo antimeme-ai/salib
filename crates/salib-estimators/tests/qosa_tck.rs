@@ -139,7 +139,7 @@ fn qosa_feature_runs() {
             let model = w.model.ok_or_else(|| StepError::new("no model"))?;
             let (x, y) = build_inputs(model, w.n);
             w.result =
-                Some(estimate_qosa(&x, &y, 0.5).map_err(|e| StepError::new(format!("QOSA: {e}")))?);
+                Some(estimate_qosa(x.view(), &y, 0.5).map_err(|e| StepError::new(format!("QOSA: {e}")))?);
             Ok(())
         })
         .step("I record S as median_S", |w, _| {
@@ -150,7 +150,7 @@ fn qosa_feature_runs() {
             let model = w.model.ok_or_else(|| StepError::new("no model"))?;
             let (x, y) = build_inputs(model, w.n);
             w.result = Some(
-                estimate_qosa(&x, &y, 0.95).map_err(|e| StepError::new(format!("QOSA: {e}")))?,
+                estimate_qosa(x.view(), &y, 0.95).map_err(|e| StepError::new(format!("QOSA: {e}")))?,
             );
             Ok(())
         })
@@ -161,8 +161,8 @@ fn qosa_feature_runs() {
         .step("I estimate QOSA at α=0.75 twice", |w, _| {
             let model = w.model.ok_or_else(|| StepError::new("no model"))?;
             let (x, y) = build_inputs(model, w.n);
-            w.result = Some(estimate_qosa(&x, &y, 0.75).expect("a"));
-            w.result_b = Some(estimate_qosa(&x, &y, 0.75).expect("b"));
+            w.result = Some(estimate_qosa(x.view(), &y, 0.75).expect("a"));
+            w.result_b = Some(estimate_qosa(x.view(), &y, 0.75).expect("b"));
             Ok(())
         })
         .step("S^α_2 exceeds S^α_1", |w, _| {

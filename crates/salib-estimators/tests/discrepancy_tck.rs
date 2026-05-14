@@ -41,7 +41,7 @@ fn regular_grid_2d() -> Array2<f64> {
 #[test]
 fn regular_grid_centered_discrepancy() {
     let sample = regular_grid_2d();
-    let result = compute_discrepancy(&sample).unwrap();
+    let result = compute_discrepancy(sample.view()).unwrap();
 
     // All four metrics should be positive for a 4-point grid.
     assert!(
@@ -97,8 +97,8 @@ fn sobol_lower_cd_than_random() {
     let sobol = sobol_sample(256, 3);
     let lhs = lhs_sample(256, 3);
 
-    let r_sobol = compute_discrepancy(&sobol).unwrap();
-    let r_lhs = compute_discrepancy(&lhs).unwrap();
+    let r_sobol = compute_discrepancy(sobol.view()).unwrap();
+    let r_lhs = compute_discrepancy(lhs.view()).unwrap();
 
     assert!(
         r_sobol.centered < r_lhs.centered,
@@ -117,8 +117,8 @@ fn discrepancy_decreases_with_n_sobol() {
     let sobol_64 = sobol_sample(64, 3);
     let sobol_256 = sobol_sample(256, 3);
 
-    let r_64 = compute_discrepancy(&sobol_64).unwrap();
-    let r_256 = compute_discrepancy(&sobol_256).unwrap();
+    let r_64 = compute_discrepancy(sobol_64.view()).unwrap();
+    let r_256 = compute_discrepancy(sobol_256.view()).unwrap();
 
     assert!(
         r_256.centered < r_64.centered,
@@ -142,7 +142,7 @@ fn all_discrepancies_non_negative() {
         array![[0.5, 0.5]],
     ];
     for (idx, sample) in samples.iter().enumerate() {
-        let r = compute_discrepancy(sample).unwrap();
+        let r = compute_discrepancy(sample.view()).unwrap();
         assert!(r.centered >= 0.0, "sample {idx}: CD = {} < 0", r.centered);
         assert!(
             r.wrap_around >= 0.0,
@@ -162,7 +162,7 @@ fn all_discrepancies_non_negative() {
 fn error_empty_matrix() {
     let sample = Array2::<f64>::zeros((0, 3));
     assert!(matches!(
-        compute_discrepancy(&sample),
+        compute_discrepancy(sample.view()),
         Err(DiscrepancyError::EmptyMatrix)
     ));
 }
@@ -171,13 +171,13 @@ fn error_empty_matrix() {
 fn error_out_of_range() {
     let sample = array![[0.5, -0.1]];
     assert!(matches!(
-        compute_discrepancy(&sample),
+        compute_discrepancy(sample.view()),
         Err(DiscrepancyError::NotUnitInterval(v)) if v < 0.0
     ));
 
     let sample2 = array![[0.5, 1.01]];
     assert!(matches!(
-        compute_discrepancy(&sample2),
+        compute_discrepancy(sample2.view()),
         Err(DiscrepancyError::NotUnitInterval(v)) if v > 1.0
     ));
 }

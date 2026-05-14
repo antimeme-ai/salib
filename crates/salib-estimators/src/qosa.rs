@@ -96,6 +96,8 @@
 
 use std::fmt;
 
+use ndarray::ArrayView2;
+#[cfg(test)]
 use ndarray::Array2;
 use salib_core::tree_sum;
 
@@ -186,7 +188,7 @@ pub enum QosaError {
 /// - [`QosaError::DegenerateTail`] if the global CTE collapses onto
 ///   the global mean (numerically `< 1e-12 · |Ȳ| + 1e-15`); the
 ///   index denominator vanishes.
-pub fn estimate_qosa(x: &Array2<f64>, y: &[f64], alpha: f64) -> Result<QosaIndices, QosaError> {
+pub fn estimate_qosa(x: ArrayView2<'_, f64>, y: &[f64], alpha: f64) -> Result<QosaIndices, QosaError> {
     let n = x.nrows();
     let d = x.ncols();
     if d == 0 {
@@ -334,7 +336,7 @@ mod tests {
     fn shape_mismatch_errors() {
         let x = Array2::<f64>::zeros((10, 3));
         let y = vec![0.0; 5];
-        let err = estimate_qosa(&x, &y, 0.5).unwrap_err();
+        let err = estimate_qosa(x.view(), &y, 0.5).unwrap_err();
         assert!(matches!(err, QosaError::ShapeMismatch { .. }));
     }
 
@@ -342,7 +344,7 @@ mod tests {
     fn zero_d_errors() {
         let x = Array2::<f64>::zeros((100, 0));
         let y = vec![0.0; 100];
-        assert_eq!(estimate_qosa(&x, &y, 0.5).unwrap_err(), QosaError::ZeroD);
+        assert_eq!(estimate_qosa(x.view(), &y, 0.5).unwrap_err(), QosaError::ZeroD);
     }
 
     #[test]
@@ -350,7 +352,7 @@ mod tests {
         let x = Array2::<f64>::zeros((8, 3));
         let y = vec![0.0; 8];
         assert!(matches!(
-            estimate_qosa(&x, &y, 0.5).unwrap_err(),
+            estimate_qosa(x.view(), &y, 0.5).unwrap_err(),
             QosaError::InsufficientSamples { .. }
         ));
     }
@@ -361,7 +363,7 @@ mod tests {
         let y: Vec<f64> = (0..100).map(|k| k as f64).collect();
         for bad in [0.0, 1.0, -0.1, 1.5, f64::NAN] {
             assert!(matches!(
-                estimate_qosa(&x, &y, bad).unwrap_err(),
+                estimate_qosa(x.view(), &y, bad).unwrap_err(),
                 QosaError::InvalidAlpha { .. }
             ));
         }
@@ -372,7 +374,7 @@ mod tests {
         let x = synthetic_uniform(64, 3);
         let y = vec![5.0; 64];
         assert_eq!(
-            estimate_qosa(&x, &y, 0.5).unwrap_err(),
+            estimate_qosa(x.view(), &y, 0.5).unwrap_err(),
             QosaError::ZeroVariance
         );
     }
@@ -386,7 +388,7 @@ mod tests {
         let n = 1024;
         let x = synthetic_uniform(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]]).collect();
-        let result = estimate_qosa(&x, &y, 0.5).unwrap();
+        let result = estimate_qosa(x.view(), &y, 0.5).unwrap();
         assert!(
             result.s[1] < 0.1,
             "S^α_1 = {} should be ≈ 0 (X_1 ⊥ Y)",
@@ -414,7 +416,7 @@ mod tests {
         let n = 2048;
         let x = synthetic_uniform(n, 2);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]]).collect();
-        let result = estimate_qosa(&x, &y, 0.5).unwrap();
+        let result = estimate_qosa(x.view(), &y, 0.5).unwrap();
         assert!(
             result.s[0] > 0.85,
             "S^α_0 = {} should be near 1 (Y = X_0)",
@@ -429,7 +431,7 @@ mod tests {
         let n = 256;
         let x = synthetic_uniform(n, 5);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]] + x[[k, 2]]).collect();
-        let result = estimate_qosa(&x, &y, 0.75).unwrap();
+        let result = estimate_qosa(x.view(), &y, 0.75).unwrap();
         assert_eq!(result.d(), 5);
         assert_eq!(result.alpha, 0.75);
         assert!(result.global_cte > result.global_quantile);
@@ -458,8 +460,8 @@ mod tests {
             })
             .collect();
 
-        let median = estimate_qosa(&x, &y, 0.5).unwrap();
-        let tail = estimate_qosa(&x, &y, 0.95).unwrap();
+        let median = estimate_qosa(x.view(), &y, 0.5).unwrap();
+        let tail = estimate_qosa(x.view(), &y, 0.95).unwrap();
 
         // At median, X_0 is the dominant driver.
         assert!(
@@ -485,8 +487,8 @@ mod tests {
         let n = 256;
         let x = synthetic_uniform(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]] * x[[k, 1]]).collect();
-        let a = estimate_qosa(&x, &y, 0.7).unwrap();
-        let b = estimate_qosa(&x, &y, 0.7).unwrap();
+        let a = estimate_qosa(x.view(), &y, 0.7).unwrap();
+        let b = estimate_qosa(x.view(), &y, 0.7).unwrap();
         assert_eq!(a.s, b.s);
         assert_eq!(a.global_quantile, b.global_quantile);
         assert_eq!(a.global_cte, b.global_cte);

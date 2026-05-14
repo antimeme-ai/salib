@@ -74,6 +74,8 @@ use std::cmp::Ordering;
 use std::f64::consts::PI;
 use std::fmt;
 
+use ndarray::ArrayView2;
+#[cfg(test)]
 use ndarray::Array2;
 use salib_core::tree_sum;
 
@@ -142,7 +144,7 @@ pub enum BorgonovoError {
 /// - [`BorgonovoError::InsufficientSamples`] if `N < 16`.
 /// - [`BorgonovoError::ZeroVariance`] if `Y` has zero range.
 pub fn estimate_borgonovo_delta(
-    x: &Array2<f64>,
+    x: ArrayView2<'_, f64>,
     y: &[f64],
 ) -> Result<BorgonovoIndices, BorgonovoError> {
     let n = x.nrows();
@@ -381,7 +383,7 @@ mod tests {
         let x = Array2::<f64>::zeros((100, 0));
         let y = vec![0.0; 100];
         assert_eq!(
-            estimate_borgonovo_delta(&x, &y).unwrap_err(),
+            estimate_borgonovo_delta(x.view(), &y).unwrap_err(),
             BorgonovoError::ZeroD
         );
     }
@@ -390,7 +392,7 @@ mod tests {
     fn shape_mismatch_errors() {
         let x = Array2::<f64>::zeros((100, 3));
         let y = vec![0.0; 50];
-        let err = estimate_borgonovo_delta(&x, &y).unwrap_err();
+        let err = estimate_borgonovo_delta(x.view(), &y).unwrap_err();
         assert!(matches!(err, BorgonovoError::ShapeMismatch { .. }));
     }
 
@@ -398,7 +400,7 @@ mod tests {
     fn insufficient_samples_errors() {
         let x = synthetic_x(10, 3);
         let y = vec![0.0; 10];
-        let err = estimate_borgonovo_delta(&x, &y).unwrap_err();
+        let err = estimate_borgonovo_delta(x.view(), &y).unwrap_err();
         assert!(matches!(err, BorgonovoError::InsufficientSamples { .. }));
     }
 
@@ -406,7 +408,7 @@ mod tests {
     fn constant_model_errors() {
         let x = synthetic_x(64, 3);
         let y = vec![1.0; 64];
-        let err = estimate_borgonovo_delta(&x, &y).unwrap_err();
+        let err = estimate_borgonovo_delta(x.view(), &y).unwrap_err();
         assert_eq!(err, BorgonovoError::ZeroVariance);
     }
 
@@ -439,7 +441,7 @@ mod tests {
         let n = 256;
         let x = synthetic_x(n, 5);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]]).collect();
-        let est = estimate_borgonovo_delta(&x, &y).unwrap();
+        let est = estimate_borgonovo_delta(x.view(), &y).unwrap();
         assert_eq!(est.d(), 5);
     }
 
@@ -455,7 +457,7 @@ mod tests {
         let y: Vec<f64> = (0..n)
             .map(|k| x[[k, 0]] + 0.5 * x[[k, 1]] * x[[k, 2]])
             .collect();
-        let est = estimate_borgonovo_delta(&x, &y).unwrap();
+        let est = estimate_borgonovo_delta(x.view(), &y).unwrap();
         for &v in &est.delta {
             assert!((-0.05..=1.05).contains(&v), "δ = {v} outside [-0.05, 1.05]");
         }
@@ -469,7 +471,7 @@ mod tests {
         let n = 512;
         let x = synthetic_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]]).collect();
-        let est = estimate_borgonovo_delta(&x, &y).unwrap();
+        let est = estimate_borgonovo_delta(x.view(), &y).unwrap();
         assert!(
             est.delta[0] > est.delta[1],
             "δ_0 = {} should exceed δ_1 = {}",
@@ -491,8 +493,8 @@ mod tests {
         let n = 64;
         let x = synthetic_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]] + x[[k, 1]] * x[[k, 2]]).collect();
-        let a = estimate_borgonovo_delta(&x, &y).unwrap();
-        let b = estimate_borgonovo_delta(&x, &y).unwrap();
+        let a = estimate_borgonovo_delta(x.view(), &y).unwrap();
+        let b = estimate_borgonovo_delta(x.view(), &y).unwrap();
         assert_eq!(a.delta, b.delta);
     }
 

@@ -62,6 +62,8 @@
 use std::cmp::Ordering;
 use std::fmt;
 
+use ndarray::ArrayView2;
+#[cfg(test)]
 use ndarray::Array2;
 use salib_core::tree_sum;
 
@@ -133,7 +135,7 @@ pub enum GivenDataSobolError {
 /// - [`GivenDataSobolError::InsufficientSamples`] if `N < 16`.
 /// - [`GivenDataSobolError::ZeroVariance`] if `Var(Y) ≈ 0`.
 pub fn estimate_given_data_sobol(
-    x: &Array2<f64>,
+    x: ArrayView2<'_, f64>,
     y: &[f64],
 ) -> Result<GivenDataSobolIndices, GivenDataSobolError> {
     let n = x.nrows();
@@ -260,7 +262,7 @@ mod tests {
         let x = Array2::<f64>::zeros((100, 0));
         let y = vec![0.0; 100];
         assert_eq!(
-            estimate_given_data_sobol(&x, &y).unwrap_err(),
+            estimate_given_data_sobol(x.view(), &y).unwrap_err(),
             GivenDataSobolError::ZeroD
         );
     }
@@ -269,7 +271,7 @@ mod tests {
     fn shape_mismatch_errors() {
         let x = Array2::<f64>::zeros((100, 3));
         let y = vec![0.0; 50];
-        let err = estimate_given_data_sobol(&x, &y).unwrap_err();
+        let err = estimate_given_data_sobol(x.view(), &y).unwrap_err();
         assert!(matches!(err, GivenDataSobolError::ShapeMismatch { .. }));
     }
 
@@ -277,7 +279,7 @@ mod tests {
     fn insufficient_samples_errors() {
         let x = synthetic_x(10, 3);
         let y = vec![0.0; 10];
-        let err = estimate_given_data_sobol(&x, &y).unwrap_err();
+        let err = estimate_given_data_sobol(x.view(), &y).unwrap_err();
         assert!(matches!(
             err,
             GivenDataSobolError::InsufficientSamples { .. }
@@ -288,7 +290,7 @@ mod tests {
     fn constant_model_errors() {
         let x = synthetic_x(64, 3);
         let y = vec![1.0; 64];
-        let err = estimate_given_data_sobol(&x, &y).unwrap_err();
+        let err = estimate_given_data_sobol(x.view(), &y).unwrap_err();
         assert_eq!(err, GivenDataSobolError::ZeroVariance);
     }
 
@@ -299,7 +301,7 @@ mod tests {
         let n = 256;
         let x = synthetic_x(n, 5);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]]).collect();
-        let est = estimate_given_data_sobol(&x, &y).unwrap();
+        let est = estimate_given_data_sobol(x.view(), &y).unwrap();
         assert_eq!(est.d(), 5);
         assert_eq!(est.s1.len(), 5);
     }
@@ -313,7 +315,7 @@ mod tests {
         let y: Vec<f64> = (0..n)
             .map(|k| x[[k, 0]] + 0.5 * x[[k, 1]] * x[[k, 2]])
             .collect();
-        let est = estimate_given_data_sobol(&x, &y).unwrap();
+        let est = estimate_given_data_sobol(x.view(), &y).unwrap();
         for &v in &est.s1 {
             assert!((0.0..=1.0).contains(&v), "S_1 = {v} not in [0, 1]");
         }
@@ -327,7 +329,7 @@ mod tests {
         let n = 512;
         let x = synthetic_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]]).collect();
-        let est = estimate_given_data_sobol(&x, &y).unwrap();
+        let est = estimate_given_data_sobol(x.view(), &y).unwrap();
         assert!(
             est.s1[0] > 0.7,
             "S_1[0] = {} should dominate for Y = X_0",
@@ -353,7 +355,7 @@ mod tests {
         let n = 4096;
         let x = synthetic_x(n, 2);
         let y: Vec<f64> = (0..n).map(|k| 2.0 * x[[k, 0]] + x[[k, 1]]).collect();
-        let est = estimate_given_data_sobol(&x, &y).unwrap();
+        let est = estimate_given_data_sobol(x.view(), &y).unwrap();
         assert!(
             (est.s1[0] - 0.8).abs() < 0.05,
             "S_1[0] = {} should ≈ 0.8",
@@ -373,8 +375,8 @@ mod tests {
         let n = 64;
         let x = synthetic_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]] + x[[k, 1]] * x[[k, 2]]).collect();
-        let a = estimate_given_data_sobol(&x, &y).unwrap();
-        let b = estimate_given_data_sobol(&x, &y).unwrap();
+        let a = estimate_given_data_sobol(x.view(), &y).unwrap();
+        let b = estimate_given_data_sobol(x.view(), &y).unwrap();
         assert_eq!(a.s1, b.s1);
     }
 

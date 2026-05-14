@@ -88,7 +88,7 @@
 use std::error::Error as StdError;
 use std::fmt;
 
-use ndarray::Array2;
+use ndarray::{Array2, ArrayView2};
 use rand::RngCore;
 use salib_core::RngState;
 
@@ -193,7 +193,7 @@ pub enum BootstrapGivenDataError {
 ///   `x.nrows() != y.len()`.
 /// - [`BootstrapGivenDataError::EmptySample`] if `x.nrows() == 0`.
 pub fn bootstrap_given_data<F>(
-    x: &Array2<f64>,
+    x: ArrayView2<'_, f64>,
     y: &[f64],
     n_resamples: usize,
     alpha: f64,
@@ -201,7 +201,7 @@ pub fn bootstrap_given_data<F>(
     mut estimator_fn: F,
 ) -> Result<BootstrapCi, BootstrapGivenDataError>
 where
-    F: FnMut(&Array2<f64>, &[f64]) -> Result<Vec<f64>, BoxedEstimatorError>,
+    F: FnMut(ArrayView2<'_, f64>, &[f64]) -> Result<Vec<f64>, BoxedEstimatorError>,
 {
     // ── Input validation ────────────────────────────────────────────
     if n_resamples == 0 {
@@ -245,7 +245,8 @@ where
         // Materialize the resampled (X', Y'). Building owned
         // structures (rather than views) is the simplest portable
         // contract for `estimator_fn` — every existing estimator
-        // accepts `&Array2<f64>` and `&[f64]`.
+        // accepts `ArrayView2<'_, f64>` and `&[f64]`; `&x_re`
+        // auto-coerces via ndarray's deref-based coercion.
         for (row_out, &src) in idx.iter().enumerate() {
             for col in 0..d_in {
                 x_re[[row_out, col]] = x[[src, col]];
@@ -253,7 +254,7 @@ where
             y_re[row_out] = y[src];
         }
 
-        match estimator_fn(&x_re, &y_re) {
+        match estimator_fn(x_re.view(), &y_re) {
             Ok(per_factor) => {
                 let acc = per_factor_resamples
                     .get_or_insert_with(|| vec![Vec::with_capacity(n_resamples); per_factor.len()]);
@@ -359,7 +360,7 @@ mod tests {
     #[test]
     fn same_inputs_produce_bit_identical_output() {
         let (x, y) = linear_gaussian(128, 0x42);
-        let estimator = |xx: &Array2<f64>, yy: &[f64]| {
+        let estimator = |xx: ArrayView2<'_, f64>, yy: &[f64]| {
             estimate_given_data_sobol(xx, yy)
                 .map(|r| r.s1)
                 .map_err(boxed)
@@ -367,8 +368,8 @@ mod tests {
 
         let mut r1 = fresh_rng();
         let mut r2 = fresh_rng();
-        let ci1 = bootstrap_given_data(&x, &y, 50, 0.05, &mut r1, estimator).unwrap();
-        let ci2 = bootstrap_given_data(&x, &y, 50, 0.05, &mut r2, estimator).unwrap();
+        let ci1 = bootstrap_given_data(x.view(), &y, 50, 0.05, &mut r1, estimator).unwrap();
+        let ci2 = bootstrap_given_data(x.view(), &y, 50, 0.05, &mut r2, estimator).unwrap();
         assert_eq!(ci1, ci2);
         assert_eq!(r1, r2);
     }
@@ -379,12 +380,12 @@ mod tests {
     fn linear_gaussian_ci_separates_strong_from_weak_factor() {
         let (x, y) = linear_gaussian(512, 0x42);
         let mut rng = fresh_rng();
-        let estimator = |xx: &Array2<f64>, yy: &[f64]| {
+        let estimator = |xx: ArrayView2<'_, f64>, yy: &[f64]| {
             estimate_given_data_sobol(xx, yy)
                 .map(|r| r.s1)
                 .map_err(boxed)
         };
-        let ci = bootstrap_given_data(&x, &y, 200, 0.05, &mut rng, estimator).unwrap();
+        let ci = bootstrap_given_data(x.view(), &y, 200, 0.05, &mut rng, estimator).unwrap();
 
         assert_eq!(ci.ci_low.len(), 3);
         assert_eq!(ci.ci_high.len(), 3);
@@ -423,12 +424,12 @@ mod tests {
     fn inert_factor_ci_brackets_zero() {
         let (x, y) = linear_gaussian(512, 0x42);
         let mut rng = fresh_rng();
-        let estimator = |xx: &Array2<f64>, yy: &[f64]| {
+        let estimator = |xx: ArrayView2<'_, f64>, yy: &[f64]| {
             estimate_given_data_sobol(xx, yy)
                 .map(|r| r.s1)
                 .map_err(boxed)
         };
-        let ci = bootstrap_given_data(&x, &y, 200, 0.05, &mut rng, estimator).unwrap();
+        let ci = bootstrap_given_data(x.view(), &y, 200, 0.05, &mut rng, estimator).unwrap();
         // X_2 is inert: a 95% CI should bracket 0 at this single
         // seed. (Statistical-coverage tests over many seeds are an
         // future enhancement.) The given-data Sobol'
@@ -453,12 +454,12 @@ mod tests {
     fn zero_resamples_errors() {
         let (x, y) = linear_gaussian(64, 0x42);
         let mut rng = fresh_rng();
-        let estimator = |xx: &Array2<f64>, yy: &[f64]| {
+        let estimator = |xx: ArrayView2<'_, f64>, yy: &[f64]| {
             estimate_given_data_sobol(xx, yy)
                 .map(|r| r.s1)
                 .map_err(boxed)
         };
-        let result = bootstrap_given_data(&x, &y, 0, 0.05, &mut rng, estimator);
+        let result = bootstrap_given_data(x.view(), &y, 0, 0.05, &mut rng, estimator);
         assert_eq!(result.unwrap_err(), BootstrapGivenDataError::ZeroResamples);
     }
 
@@ -466,12 +467,12 @@ mod tests {
     fn alpha_zero_errors() {
         let (x, y) = linear_gaussian(64, 0x42);
         let mut rng = fresh_rng();
-        let estimator = |xx: &Array2<f64>, yy: &[f64]| {
+        let estimator = |xx: ArrayView2<'_, f64>, yy: &[f64]| {
             estimate_given_data_sobol(xx, yy)
                 .map(|r| r.s1)
                 .map_err(boxed)
         };
-        let result = bootstrap_given_data(&x, &y, 50, 0.0, &mut rng, estimator);
+        let result = bootstrap_given_data(x.view(), &y, 50, 0.0, &mut rng, estimator);
         assert_eq!(
             result.unwrap_err(),
             BootstrapGivenDataError::OutOfRangeAlpha { alpha: 0.0 }
@@ -482,12 +483,12 @@ mod tests {
     fn alpha_one_errors() {
         let (x, y) = linear_gaussian(64, 0x42);
         let mut rng = fresh_rng();
-        let estimator = |xx: &Array2<f64>, yy: &[f64]| {
+        let estimator = |xx: ArrayView2<'_, f64>, yy: &[f64]| {
             estimate_given_data_sobol(xx, yy)
                 .map(|r| r.s1)
                 .map_err(boxed)
         };
-        let result = bootstrap_given_data(&x, &y, 50, 1.0, &mut rng, estimator);
+        let result = bootstrap_given_data(x.view(), &y, 50, 1.0, &mut rng, estimator);
         assert_eq!(
             result.unwrap_err(),
             BootstrapGivenDataError::OutOfRangeAlpha { alpha: 1.0 }
@@ -498,12 +499,12 @@ mod tests {
     fn alpha_negative_errors() {
         let (x, y) = linear_gaussian(64, 0x42);
         let mut rng = fresh_rng();
-        let estimator = |xx: &Array2<f64>, yy: &[f64]| {
+        let estimator = |xx: ArrayView2<'_, f64>, yy: &[f64]| {
             estimate_given_data_sobol(xx, yy)
                 .map(|r| r.s1)
                 .map_err(boxed)
         };
-        let result = bootstrap_given_data(&x, &y, 50, -0.1, &mut rng, estimator);
+        let result = bootstrap_given_data(x.view(), &y, 50, -0.1, &mut rng, estimator);
         assert!(matches!(
             result.unwrap_err(),
             BootstrapGivenDataError::OutOfRangeAlpha { .. }
@@ -515,12 +516,12 @@ mod tests {
         let (x, mut y) = linear_gaussian(64, 0x42);
         y.pop();
         let mut rng = fresh_rng();
-        let estimator = |xx: &Array2<f64>, yy: &[f64]| {
+        let estimator = |xx: ArrayView2<'_, f64>, yy: &[f64]| {
             estimate_given_data_sobol(xx, yy)
                 .map(|r| r.s1)
                 .map_err(boxed)
         };
-        let result = bootstrap_given_data(&x, &y, 50, 0.05, &mut rng, estimator);
+        let result = bootstrap_given_data(x.view(), &y, 50, 0.05, &mut rng, estimator);
         assert_eq!(
             result.unwrap_err(),
             BootstrapGivenDataError::ShapeMismatch {
@@ -535,12 +536,12 @@ mod tests {
         let x = Array2::<f64>::zeros((0, 3));
         let y: Vec<f64> = vec![];
         let mut rng = fresh_rng();
-        let estimator = |xx: &Array2<f64>, yy: &[f64]| {
+        let estimator = |xx: ArrayView2<'_, f64>, yy: &[f64]| {
             estimate_given_data_sobol(xx, yy)
                 .map(|r| r.s1)
                 .map_err(boxed)
         };
-        let result = bootstrap_given_data(&x, &y, 50, 0.05, &mut rng, estimator);
+        let result = bootstrap_given_data(x.view(), &y, 50, 0.05, &mut rng, estimator);
         assert_eq!(result.unwrap_err(), BootstrapGivenDataError::EmptySample);
     }
 
@@ -555,10 +556,10 @@ mod tests {
         let (x, y) = linear_gaussian(64, 0x42);
         let mut rng = fresh_rng();
         let always_err =
-            |_xx: &Array2<f64>, _yy: &[f64]| -> Result<Vec<f64>, BoxedEstimatorError> {
+            |_xx: ArrayView2<'_, f64>, _yy: &[f64]| -> Result<Vec<f64>, BoxedEstimatorError> {
                 Err(boxed(SyntheticErr))
             };
-        let ci = bootstrap_given_data(&x, &y, 25, 0.05, &mut rng, always_err).unwrap();
+        let ci = bootstrap_given_data(x.view(), &y, 25, 0.05, &mut rng, always_err).unwrap();
         assert_eq!(ci.n_skipped, 25);
         assert_eq!(ci.n_resamples, 25);
         assert_eq!(ci.ci_low.len(), 3);
@@ -574,7 +575,7 @@ mod tests {
         let (x, y) = linear_gaussian(64, 0x42);
         let mut rng = fresh_rng();
         let mut call_count = 0_usize;
-        let estimator = |xx: &Array2<f64>, yy: &[f64]| -> Result<Vec<f64>, BoxedEstimatorError> {
+        let estimator = |xx: ArrayView2<'_, f64>, yy: &[f64]| -> Result<Vec<f64>, BoxedEstimatorError> {
             call_count += 1;
             // Fail every third call.
             if call_count.is_multiple_of(3) {
@@ -584,7 +585,7 @@ mod tests {
                 .map(|r| r.s1)
                 .map_err(boxed)
         };
-        let ci = bootstrap_given_data(&x, &y, 30, 0.05, &mut rng, estimator).unwrap();
+        let ci = bootstrap_given_data(x.view(), &y, 30, 0.05, &mut rng, estimator).unwrap();
         assert_eq!(ci.n_skipped, 10);
         assert_eq!(ci.n_resamples, 30);
         // Surviving 20 resamples is enough to produce non-NaN CIs.
@@ -607,12 +608,12 @@ mod tests {
     fn result_carries_alpha_and_resample_count() {
         let (x, y) = linear_gaussian(64, 0x42);
         let mut rng = fresh_rng();
-        let estimator = |xx: &Array2<f64>, yy: &[f64]| {
+        let estimator = |xx: ArrayView2<'_, f64>, yy: &[f64]| {
             estimate_given_data_sobol(xx, yy)
                 .map(|r| r.s1)
                 .map_err(boxed)
         };
-        let ci = bootstrap_given_data(&x, &y, 75, 0.10, &mut rng, estimator).unwrap();
+        let ci = bootstrap_given_data(x.view(), &y, 75, 0.10, &mut rng, estimator).unwrap();
         assert_eq!(ci.n_resamples, 75);
         assert_eq!(ci.alpha, 0.10);
     }

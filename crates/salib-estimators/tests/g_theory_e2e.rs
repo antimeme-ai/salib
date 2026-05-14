@@ -28,7 +28,7 @@ fn grid() -> Array3<f64> {
 
 #[test]
 fn g_theory_recovers_expected_components_and_coefficients() {
-    let r = estimate_g_theory_pir(&grid(), GTheoryDesign::Crossed).unwrap();
+    let r = estimate_g_theory_pir(grid().view(), GTheoryDesign::Crossed).unwrap();
     let tol = 1.0e-12;
     assert!((r.sigma_p - 50.0).abs() < tol);
     assert!((r.sigma_i - 12.5).abs() < tol);
@@ -46,7 +46,7 @@ fn g_theory_bootstrap_is_deterministic_and_contains_point_estimate() {
     let mut rng_a = RngState::from_seed([0x44; 32]);
     let mut rng_b = RngState::from_seed([0x44; 32]);
     let a = estimate_g_theory_pir_with_bootstrap(
-        &grid(),
+        grid().view(),
         GTheoryDesign::Crossed,
         128,
         0.05,
@@ -54,7 +54,7 @@ fn g_theory_bootstrap_is_deterministic_and_contains_point_estimate() {
     )
     .expect("g-theory bootstrap estimate");
     let b = estimate_g_theory_pir_with_bootstrap(
-        &grid(),
+        grid().view(),
         GTheoryDesign::Crossed,
         128,
         0.05,

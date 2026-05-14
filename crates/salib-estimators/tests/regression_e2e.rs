@@ -81,7 +81,7 @@ fn ishigami_setup(n: usize) -> (Array2<f64>, Vec<f64>) {
 
 fn run_ishigami_at_n(n: usize) -> RegressionIndices {
     let (x, y) = ishigami_setup(n);
-    estimate_regression_indices(&x, &y).expect("estimate")
+    estimate_regression_indices(x.view(), &y).expect("estimate")
 }
 
 // ── Artifact 1: linear-fixture recovery ─────────────────────────────
@@ -94,7 +94,7 @@ fn regression_recovers_linear_coefficient_ratio() {
     let n = 1024;
     let x = lhs_x(n, 3);
     let y: Vec<f64> = (0..n).map(|k| 2.0 * x[[k, 0]] + x[[k, 1]]).collect();
-    let est = estimate_regression_indices(&x, &y).expect("estimate");
+    let est = estimate_regression_indices(x.view(), &y).expect("estimate");
     assert!(
         est.r2_linear > 0.99,
         "R²_linear = {:.4}, expected near 1",

@@ -53,7 +53,7 @@ use std::cmp::Ordering;
 use std::fmt;
 
 use nalgebra::{DMatrix, DVector};
-use ndarray::Array2;
+use ndarray::{Array2, ArrayView2};
 use salib_core::tree_sum;
 
 /// Regression-based sensitivity indices and `R²` diagnostics.
@@ -150,7 +150,7 @@ pub enum RegressionError {
 /// - [`RegressionError::SingularDesignMatrix`] if `XᵀX` is
 ///   non-invertible.
 pub fn estimate_regression_indices(
-    x: &Array2<f64>,
+    x: ArrayView2<'_, f64>,
     y: &[f64],
 ) -> Result<RegressionIndices, RegressionError> {
     let n = x.nrows();
@@ -196,7 +196,7 @@ pub fn estimate_regression_indices(
     }
     let y_rank = ordinal_ranks_f64(y);
 
-    let (srrc, prcc, r2_rank) = compute_src_pcc_r2(&x_rank, &y_rank)?;
+    let (srrc, prcc, r2_rank) = compute_src_pcc_r2(x_rank.view(), &y_rank)?;
 
     Ok(RegressionIndices {
         src,
@@ -214,7 +214,7 @@ pub fn estimate_regression_indices(
 /// PCC: Pearson correlation between residuals of `Xᵢ` and `y`
 ///      regressed on the *other* X columns.
 fn compute_src_pcc_r2(
-    x: &Array2<f64>,
+    x: ArrayView2<'_, f64>,
     y: &[f64],
 ) -> Result<(Vec<f64>, Vec<f64>, f64), RegressionError> {
     let n = x.nrows();
@@ -260,7 +260,7 @@ fn compute_src_pcc_r2(
 }
 
 /// `(N, d+1)` design matrix `[1, X]`.
-fn build_design_matrix(x: &Array2<f64>, n: usize, d: usize) -> DMatrix<f64> {
+fn build_design_matrix(x: ArrayView2<'_, f64>, n: usize, d: usize) -> DMatrix<f64> {
     let mut design = DMatrix::<f64>::zeros(n, d + 1);
     for k in 0..n {
         design[(k, 0)] = 1.0;
@@ -283,7 +283,7 @@ fn solve_ols(design: &DMatrix<f64>, y: &DVector<f64>) -> Result<DVector<f64>, Re
 
 /// Partial correlation between `X[:, j]` and `y`, controlling for
 /// the other columns of `X`.
-fn partial_correlation(x: &Array2<f64>, y: &[f64], j: usize) -> Result<f64, RegressionError> {
+fn partial_correlation(x: ArrayView2<'_, f64>, y: &[f64], j: usize) -> Result<f64, RegressionError> {
     let n = x.nrows();
     let d = x.ncols();
 
@@ -309,14 +309,14 @@ fn partial_correlation(x: &Array2<f64>, y: &[f64], j: usize) -> Result<f64, Regr
     // y on Z.
     let xj: Vec<f64> = (0..n).map(|k| x[[k, j]]).collect();
     let xj_resid = if d > 1 {
-        residuals_from_regression(&z, &xj, n, d - 1)?
+        residuals_from_regression(z.view(), &xj, n, d - 1)?
     } else {
         // d = 1: no other factors → residuals = X_j - mean(X_j).
         let mean_xj = tree_sum(&xj) / (n as f64);
         xj.iter().map(|&v| v - mean_xj).collect()
     };
     let y_resid = if d > 1 {
-        residuals_from_regression(&z, y, n, d - 1)?
+        residuals_from_regression(z.view(), y, n, d - 1)?
     } else {
         let mean_y = tree_sum(y) / (n as f64);
         y.iter().map(|&v| v - mean_y).collect()
@@ -327,7 +327,7 @@ fn partial_correlation(x: &Array2<f64>, y: &[f64], j: usize) -> Result<f64, Regr
 
 /// Fit `target ≈ α₀ + α·z` via OLS and return the residuals.
 fn residuals_from_regression(
-    z: &Array2<f64>,
+    z: ArrayView2<'_, f64>,
     target: &[f64],
     n: usize,
     d_z: usize,
@@ -418,7 +418,7 @@ mod tests {
         let x = Array2::<f64>::zeros((100, 0));
         let y = vec![0.0; 100];
         assert_eq!(
-            estimate_regression_indices(&x, &y).unwrap_err(),
+            estimate_regression_indices(x.view(), &y).unwrap_err(),
             RegressionError::ZeroD
         );
     }
@@ -427,7 +427,7 @@ mod tests {
     fn shape_mismatch_errors() {
         let x = Array2::<f64>::zeros((100, 3));
         let y = vec![0.0; 50];
-        let err = estimate_regression_indices(&x, &y).unwrap_err();
+        let err = estimate_regression_indices(x.view(), &y).unwrap_err();
         assert!(matches!(err, RegressionError::ShapeMismatch { .. }));
     }
 
@@ -436,7 +436,7 @@ mod tests {
         // d=3, need N ≥ 5.
         let x = synthetic_x(4, 3);
         let y = vec![0.0; 4];
-        let err = estimate_regression_indices(&x, &y).unwrap_err();
+        let err = estimate_regression_indices(x.view(), &y).unwrap_err();
         assert!(matches!(err, RegressionError::InsufficientSamples { .. }));
     }
 
@@ -444,7 +444,7 @@ mod tests {
     fn constant_model_errors() {
         let x = synthetic_x(64, 3);
         let y = vec![1.0; 64];
-        let err = estimate_regression_indices(&x, &y).unwrap_err();
+        let err = estimate_regression_indices(x.view(), &y).unwrap_err();
         assert_eq!(err, RegressionError::ZeroVariance);
     }
 
@@ -455,7 +455,7 @@ mod tests {
             x[[k, 1]] = 0.5; // factor 1 constant
         }
         let y: Vec<f64> = (0..64).map(|k| x[[k, 0]] + x[[k, 2]]).collect();
-        let err = estimate_regression_indices(&x, &y).unwrap_err();
+        let err = estimate_regression_indices(x.view(), &y).unwrap_err();
         assert_eq!(err, RegressionError::ZeroFactorVariance { factor: 1 });
     }
 
@@ -466,7 +466,7 @@ mod tests {
         let n = 64;
         let x = synthetic_x(n, 4);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]] + 2.0 * x[[k, 1]]).collect();
-        let est = estimate_regression_indices(&x, &y).unwrap();
+        let est = estimate_regression_indices(x.view(), &y).unwrap();
         assert_eq!(est.d(), 4);
         assert_eq!(est.src.len(), 4);
         assert_eq!(est.srrc.len(), 4);
@@ -482,7 +482,7 @@ mod tests {
         let n = 256;
         let x = synthetic_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]]).collect();
-        let est = estimate_regression_indices(&x, &y).unwrap();
+        let est = estimate_regression_indices(x.view(), &y).unwrap();
         assert!(est.r2_linear > 0.99, "R²_linear = {}", est.r2_linear);
         assert!(
             est.src[0].abs() > 0.95,
@@ -511,7 +511,7 @@ mod tests {
         let n = 1024;
         let x = synthetic_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| 2.0 * x[[k, 0]] + x[[k, 1]]).collect();
-        let est = estimate_regression_indices(&x, &y).unwrap();
+        let est = estimate_regression_indices(x.view(), &y).unwrap();
         assert!(est.r2_linear > 0.99);
         // Ratio SRC_0 / SRC_1 should be ≈ 2 within MC noise.
         let ratio = est.src[0].abs() / est.src[1].abs();
@@ -531,7 +531,7 @@ mod tests {
         let n = 512;
         let x = synthetic_x(n, 2);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]].powi(2)).collect();
-        let est = estimate_regression_indices(&x, &y).unwrap();
+        let est = estimate_regression_indices(x.view(), &y).unwrap();
         // R²_linear is reduced because Y vs X is not linear.
         // (It's still > 0 since X² is correlated with X over [0, 1].)
         assert!(est.r2_linear < 0.99, "R²_linear = {}", est.r2_linear);
@@ -548,7 +548,7 @@ mod tests {
         let n = 1024;
         let x = synthetic_x(n, 2);
         let y: Vec<f64> = (0..n).map(|k| (x[[k, 0]] - 0.5).powi(3)).collect();
-        let est = estimate_regression_indices(&x, &y).unwrap();
+        let est = estimate_regression_indices(x.view(), &y).unwrap();
         assert!(
             est.prcc[0].abs() > 0.95,
             "|PRCC_0| = {} should be near 1 (strict monotonic)",
@@ -563,8 +563,8 @@ mod tests {
         let n = 64;
         let x = synthetic_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]] + x[[k, 1]] * x[[k, 2]]).collect();
-        let a = estimate_regression_indices(&x, &y).unwrap();
-        let b = estimate_regression_indices(&x, &y).unwrap();
+        let a = estimate_regression_indices(x.view(), &y).unwrap();
+        let b = estimate_regression_indices(x.view(), &y).unwrap();
         assert_eq!(a.src, b.src);
         assert_eq!(a.srrc, b.srrc);
         assert_eq!(a.pcc, b.pcc);
@@ -611,7 +611,7 @@ mod tests {
         let n = 100;
         let x = synthetic_x(n, 1);
         let y: Vec<f64> = (0..n).map(|k| 2.0 * x[[k, 0]]).collect();
-        let est = estimate_regression_indices(&x, &y).unwrap();
+        let est = estimate_regression_indices(x.view(), &y).unwrap();
         // Y is perfectly linear in X_0 → PCC ≈ 1.
         assert!(
             (est.pcc[0].abs() - 1.0).abs() < 1e-6,

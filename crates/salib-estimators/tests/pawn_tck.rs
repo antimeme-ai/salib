@@ -92,7 +92,7 @@ fn pawn_ishigami_feature_runs() {
         .step("I estimate PAWN", |w, _| {
             let (x, y) = build_inputs(w.n);
             w.estimate = Some(
-                estimate_pawn(&x, &y, w.s).map_err(|e| StepError::new(format!("estimate: {e}")))?,
+                estimate_pawn(x.view(), &y, w.s).map_err(|e| StepError::new(format!("estimate: {e}")))?,
             );
             Ok(())
         })

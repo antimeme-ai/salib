@@ -77,6 +77,8 @@
 )]
 
 use nalgebra::{DMatrix, DVector};
+use ndarray::ArrayView2;
+#[cfg(test)]
 use ndarray::Array2;
 
 use crate::multi_index::{enumerate_hyperbolic, enumerate_total_degree, MultiIndex};
@@ -151,7 +153,7 @@ pub struct SparseFitDiagnostic {
 /// - [`PceError::SingularDesignMatrix`] if the active-set Gram matrix
 ///   becomes singular (collinearity in the chosen subset).
 pub fn fit_sparse_pce(
-    samples_canonical: &Array2<f64>,
+    samples_canonical: ArrayView2<'_, f64>,
     y: &[f64],
     families: &[PolynomialFamily],
     max_degree: usize,
@@ -678,7 +680,7 @@ mod tests {
         let x = Array2::<f64>::zeros((10, 0));
         let y = vec![0.0; 10];
         let err = fit_sparse_pce(
-            &x,
+            x.view(),
             &y,
             &[],
             3,
@@ -695,7 +697,7 @@ mod tests {
         let x = Array2::<f64>::zeros((10, 3));
         let y = vec![0.0; 5];
         let err = fit_sparse_pce(
-            &x,
+            x.view(),
             &y,
             &[PolynomialFamily::Legendre; 3],
             3,
@@ -715,7 +717,7 @@ mod tests {
         let x = linspace_unit_to_canonical(n, 2);
         let y = vec![5.0; n];
         let (pce, _) = fit_sparse_pce(
-            &x,
+            x.view(),
             &y,
             &[PolynomialFamily::Legendre; 2],
             3,
@@ -737,7 +739,7 @@ mod tests {
             .map(|i| x[[i, 0]] + 0.5 * x[[i, 2]] + 2.0 * x[[i, 4]])
             .collect();
         let (pce, diag) = fit_sparse_pce(
-            &x,
+            x.view(),
             &y,
             &[PolynomialFamily::Legendre; 5],
             4,
@@ -776,7 +778,7 @@ mod tests {
             .map(|i| x[[i, 0]] + 0.5 * x[[i, 2]] + 2.0 * x[[i, 4]])
             .collect();
         let (pce, diag) = fit_sparse_pce(
-            &x,
+            x.view(),
             &y,
             &[PolynomialFamily::Legendre; 5],
             4,
@@ -809,7 +811,7 @@ mod tests {
         let x = linspace_unit_to_canonical(n, 5);
         let y: Vec<f64> = (0..n).map(|i| x[[i, 0]] + 2.0 * x[[i, 4]]).collect();
         let (_pce, diag) = fit_sparse_pce(
-            &x,
+            x.view(),
             &y,
             &[PolynomialFamily::Legendre; 5],
             4,
@@ -835,7 +837,7 @@ mod tests {
         let x = linspace_unit_to_canonical(n, 3);
         let y: Vec<f64> = (0..n).map(|i| x[[i, 0]] + x[[i, 1]] + x[[i, 2]]).collect();
         let a = fit_sparse_pce(
-            &x,
+            x.view(),
             &y,
             &[PolynomialFamily::Legendre; 3],
             3,
@@ -846,7 +848,7 @@ mod tests {
         .unwrap()
         .0;
         let b = fit_sparse_pce(
-            &x,
+            x.view(),
             &y,
             &[PolynomialFamily::Legendre; 3],
             3,
@@ -865,7 +867,7 @@ mod tests {
         let x = linspace_unit_to_canonical(n, 3);
         let y: Vec<f64> = (0..n).map(|i| x[[i, 0]] + x[[i, 1]] + x[[i, 2]]).collect();
         let a = fit_sparse_pce(
-            &x,
+            x.view(),
             &y,
             &[PolynomialFamily::Legendre; 3],
             3,
@@ -876,7 +878,7 @@ mod tests {
         .unwrap()
         .0;
         let b = fit_sparse_pce(
-            &x,
+            x.view(),
             &y,
             &[PolynomialFamily::Legendre; 3],
             3,

@@ -69,7 +69,7 @@
 )]
 
 use nalgebra::{DMatrix, SymmetricEigen};
-use ndarray::Array2;
+use ndarray::{Array2, ArrayView2};
 
 /// Result of an active-subspace computation.
 ///
@@ -142,7 +142,7 @@ pub enum ActiveSubspaceError {
 /// - [`ActiveSubspaceError::InvalidGapThreshold`] if `gap_threshold = Some(t)` with `t ≤ 1`.
 /// - [`ActiveSubspaceError::NonFiniteSpectrum`] if every computed eigenvalue is NaN/Inf.
 pub fn compute_active_subspace(
-    gradients: &Array2<f64>,
+    gradients: ArrayView2<'_, f64>,
     gap_threshold: Option<f64>,
 ) -> Result<ActiveSubspace, ActiveSubspaceError> {
     let m = gradients.nrows();
@@ -285,26 +285,26 @@ mod tests {
     #[test]
     fn empty_gradients_errors() {
         let g = Array2::<f64>::zeros((0, 3));
-        let err = compute_active_subspace(&g, None).unwrap_err();
+        let err = compute_active_subspace(g.view(), None).unwrap_err();
         assert_eq!(err, ActiveSubspaceError::EmptyGradients);
     }
 
     #[test]
     fn zero_d_errors() {
         let g = Array2::<f64>::zeros((10, 0));
-        let err = compute_active_subspace(&g, None).unwrap_err();
+        let err = compute_active_subspace(g.view(), None).unwrap_err();
         assert_eq!(err, ActiveSubspaceError::ZeroD);
     }
 
     #[test]
     fn invalid_gap_threshold_errors() {
         let g = Array2::<f64>::zeros((10, 3));
-        let err = compute_active_subspace(&g, Some(0.5)).unwrap_err();
+        let err = compute_active_subspace(g.view(), Some(0.5)).unwrap_err();
         assert!(matches!(
             err,
             ActiveSubspaceError::InvalidGapThreshold { .. }
         ));
-        let err = compute_active_subspace(&g, Some(f64::NAN)).unwrap_err();
+        let err = compute_active_subspace(g.view(), Some(f64::NAN)).unwrap_err();
         assert!(matches!(
             err,
             ActiveSubspaceError::InvalidGapThreshold { .. }
@@ -323,7 +323,7 @@ mod tests {
         let a = [3.0_f64, 0.0, 4.0];
         let norm_a = (a.iter().map(|v| v * v).sum::<f64>()).sqrt();
         let g = unit_aligned_gradient_samples(&a, 50);
-        let result = compute_active_subspace(&g, None).unwrap();
+        let result = compute_active_subspace(g.view(), None).unwrap();
         // λ_1 ≈ ||a||² = 25.
         assert!(
             (result.eigenvalues[0] - 25.0).abs() < 1e-9,
@@ -350,7 +350,7 @@ mod tests {
     fn ridge_function_k_active_is_one_under_largest_gap_heuristic() {
         let a = [1.0_f64, 1.0, 1.0, 1.0]; // d = 4
         let g = unit_aligned_gradient_samples(&a, 100);
-        let result = compute_active_subspace(&g, None).unwrap();
+        let result = compute_active_subspace(g.view(), None).unwrap();
         assert_eq!(result.k_active, 1);
     }
 
@@ -373,7 +373,7 @@ mod tests {
                 g[[j, i]] = row[i];
             }
         }
-        let result = compute_active_subspace(&g, None).unwrap();
+        let result = compute_active_subspace(g.view(), None).unwrap();
         // λ_1 = max(||a||², ||b||²)/2 = 9/2 = 4.5; λ_2 = 4/2 = 2.0.
         assert!((result.eigenvalues[0] - 4.5).abs() < 1e-9);
         assert!((result.eigenvalues[1] - 2.0).abs() < 1e-9);
@@ -395,7 +395,7 @@ mod tests {
             [0.7, -0.2, 0.5],
             [0.1, 0.4, -0.3],
         ];
-        let result = compute_active_subspace(&g, None).unwrap();
+        let result = compute_active_subspace(g.view(), None).unwrap();
         for j in 0..result.eigenvalues.len().saturating_sub(1) {
             assert!(
                 result.eigenvalues[j] >= result.eigenvalues[j + 1] - 1e-12,
@@ -416,7 +416,7 @@ mod tests {
             [0.7, -0.2, 0.5],
             [0.1, 0.4, -0.3],
         ];
-        let result = compute_active_subspace(&g, None).unwrap();
+        let result = compute_active_subspace(g.view(), None).unwrap();
         let d = result.eigenvalues.len();
         for col in 0..d {
             let v: Vec<f64> = (0..d).map(|r| result.eigenvectors[[r, col]]).collect();
@@ -449,7 +449,7 @@ mod tests {
         // Ridge → λ_1 = 3, λ_2 = λ_3 = 0 (perfect gap at j=0).
         // gap_threshold = 100 still resolves to k=1 because the
         // perfect-gap path fires before the threshold check.
-        let result = compute_active_subspace(&g, Some(100.0)).unwrap();
+        let result = compute_active_subspace(g.view(), Some(100.0)).unwrap();
         assert_eq!(result.k_active, 1);
     }
 
@@ -460,7 +460,7 @@ mod tests {
         // — argmax ratio is 1.0, threshold of 1000 fails to qualify
         // any gap, all directions retained.
         let g = array![[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0],];
-        let result = compute_active_subspace(&g, Some(1000.0)).unwrap();
+        let result = compute_active_subspace(g.view(), Some(1000.0)).unwrap();
         assert_eq!(result.k_active, 3);
     }
 
@@ -469,7 +469,7 @@ mod tests {
     #[test]
     fn d_one_returns_single_eigenvalue() {
         let g = array![[2.0_f64], [3.0], [4.0]];
-        let result = compute_active_subspace(&g, None).unwrap();
+        let result = compute_active_subspace(g.view(), None).unwrap();
         assert_eq!(result.eigenvalues.len(), 1);
         // λ_1 = mean(g²) = (4 + 9 + 16)/3 = 29/3.
         assert!((result.eigenvalues[0] - 29.0 / 3.0).abs() < 1e-9);

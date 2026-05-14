@@ -24,6 +24,8 @@
 
 use std::fmt;
 
+use ndarray::ArrayView2;
+#[cfg(test)]
 use ndarray::Array2;
 use thiserror::Error;
 
@@ -70,7 +72,7 @@ impl fmt::Display for DiscrepancyResult {
 /// Returns `Err` if the matrix is empty or any value is outside
 /// `[0, 1]`.
 #[allow(clippy::cast_precision_loss)]
-pub fn compute_discrepancy(sample: &Array2<f64>) -> Result<DiscrepancyResult, DiscrepancyError> {
+pub fn compute_discrepancy(sample: ArrayView2<'_, f64>) -> Result<DiscrepancyResult, DiscrepancyError> {
     let n = sample.nrows();
     let d = sample.ncols();
     if n == 0 {
@@ -100,7 +102,7 @@ pub fn compute_discrepancy(sample: &Array2<f64>) -> Result<DiscrepancyResult, Di
 ///                                - |x_{ik} - x_{jk}|/2]
 /// ```
 #[allow(clippy::similar_names)]
-fn centered_discrepancy(sample: &Array2<f64>, n: usize, d: usize, n_f: f64) -> f64 {
+fn centered_discrepancy(sample: ArrayView2<'_, f64>, n: usize, d: usize, n_f: f64) -> f64 {
     let term1 = (13.0_f64 / 12.0).powi(d as i32);
 
     let mut sum2 = 0.0;
@@ -138,7 +140,7 @@ fn centered_discrepancy(sample: &Array2<f64>, n: usize, d: usize, n_f: f64) -> f
 /// WD² = -(4/3)^d
 ///     + (1/N²) Σ_i Σ_j Π_k [3/2 - |x_{ik} - x_{jk}| · (1 - |x_{ik} - x_{jk}|)]
 /// ```
-fn wrap_around_discrepancy(sample: &Array2<f64>, n: usize, d: usize, n_f: f64) -> f64 {
+fn wrap_around_discrepancy(sample: ArrayView2<'_, f64>, n: usize, d: usize, n_f: f64) -> f64 {
     let term1 = -((4.0_f64 / 3.0).powi(d as i32));
 
     let mut sum = 0.0;
@@ -164,7 +166,7 @@ fn wrap_around_discrepancy(sample: &Array2<f64>, n: usize, d: usize, n_f: f64) -
 ///      - (2^{1-d}/N) Σ_i Π_k (1 - x_{ik}²)
 ///      + (1/N²) Σ_i Σ_j Π_k [1 - max(x_{ik}, x_{jk})]
 /// ```
-fn l2_star_discrepancy(sample: &Array2<f64>, n: usize, d: usize, n_f: f64) -> f64 {
+fn l2_star_discrepancy(sample: ArrayView2<'_, f64>, n: usize, d: usize, n_f: f64) -> f64 {
     let term1 = (1.0_f64 / 3.0).powi(d as i32);
     let coeff2 = 2.0_f64.powi(1 - d as i32) / n_f;
 
@@ -206,7 +208,7 @@ fn l2_star_discrepancy(sample: &Array2<f64>, n: usize, d: usize, n_f: f64) -> f6
 /// kernel should be `(19/12)^2` and the double-sum kernel should be
 /// `(19/12)^2`, yielding `MD² = (19/12)^2 - 2·(19/12)^2 + (19/12)^2 = 0`.
 #[allow(clippy::similar_names)]
-fn modified_discrepancy(sample: &Array2<f64>, n: usize, d: usize, n_f: f64) -> f64 {
+fn modified_discrepancy(sample: ArrayView2<'_, f64>, n: usize, d: usize, n_f: f64) -> f64 {
     let term1 = (19.0_f64 / 12.0).powi(d as i32);
 
     let mut sum2 = 0.0;
@@ -250,7 +252,7 @@ mod tests {
     #[test]
     fn modified_single_center_is_zero() {
         let sample = array![[0.5, 0.5]];
-        let r = compute_discrepancy(&sample).unwrap();
+        let r = compute_discrepancy(sample.view()).unwrap();
         assert!(r.modified < 1e-12, "MD = {} should be ~0", r.modified);
     }
 
@@ -258,7 +260,7 @@ mod tests {
     #[test]
     fn all_non_negative_single_point() {
         let sample = array![[0.3, 0.7]];
-        let r = compute_discrepancy(&sample).unwrap();
+        let r = compute_discrepancy(sample.view()).unwrap();
         assert!(r.centered >= 0.0);
         assert!(r.wrap_around >= 0.0);
         assert!(r.modified >= 0.0);
@@ -270,7 +272,7 @@ mod tests {
     fn empty_matrix_error() {
         let sample = Array2::<f64>::zeros((0, 3));
         assert!(matches!(
-            compute_discrepancy(&sample),
+            compute_discrepancy(sample.view()),
             Err(DiscrepancyError::EmptyMatrix)
         ));
     }
@@ -280,7 +282,7 @@ mod tests {
     fn out_of_range_error() {
         let sample = array![[0.5, 1.5]];
         assert!(matches!(
-            compute_discrepancy(&sample),
+            compute_discrepancy(sample.view()),
             Err(DiscrepancyError::NotUnitInterval(v)) if (v - 1.5).abs() < 1e-15
         ));
     }

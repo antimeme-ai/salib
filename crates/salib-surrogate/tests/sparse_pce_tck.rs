@@ -150,7 +150,7 @@ fn sparse_pce_feature_runs() {
                 };
                 let d = x.ncols();
                 let (pce, diag) = fit_sparse_pce(
-                    &x,
+                    x.view(),
                     &y,
                     &vec![PolynomialFamily::Legendre; d],
                     10,
@@ -176,7 +176,7 @@ fn sparse_pce_feature_runs() {
             };
             let d = x.ncols();
             let (pce, diag) = fit_sparse_pce(
-                &x,
+                x.view(),
                 &y,
                 &vec![PolynomialFamily::Legendre; d],
                 4,
@@ -308,7 +308,7 @@ fn sparse_pce_feature_runs() {
             |w, _| {
                 let (x, y) = ishigami_canonical_inputs(w.n);
                 let (pce_a, _) = fit_sparse_pce(
-                    &x,
+                    x.view(),
                     &y,
                     &[PolynomialFamily::Legendre; 3],
                     10,
@@ -318,7 +318,7 @@ fn sparse_pce_feature_runs() {
                 )
                 .map_err(|e| StepError::new(format!("fit a: {e}")))?;
                 let (pce_b, _) = fit_sparse_pce(
-                    &x,
+                    x.view(),
                     &y,
                     &[PolynomialFamily::Legendre; 3],
                     10,

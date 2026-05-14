@@ -65,7 +65,7 @@ fn lhs_ishigami(n: usize) -> (Array2<f64>, Vec<f64>) {
 
 fn run_at_n(n: usize) -> GivenDataSobolIndices {
     let (x, y) = lhs_ishigami(n);
-    estimate_given_data_sobol(&x, &y).expect("estimate")
+    estimate_given_data_sobol(x.view(), &y).expect("estimate")
 }
 
 // ── Artifact 1: canonical analytic recovery ─────────────────────────
@@ -109,8 +109,8 @@ fn given_data_sobol_indices_in_unit_interval() {
 fn given_data_sobol_lands_in_rbd_fast_neighborhood() {
     use salib_estimators::estimate_rbd_fast;
     let (x, y) = lhs_ishigami(4096);
-    let est_given_data = estimate_given_data_sobol(&x, &y).expect("given-data");
-    let est_rbd = estimate_rbd_fast(&x, &y, 10).expect("rbd-fast");
+    let est_given_data = estimate_given_data_sobol(x.view(), &y).expect("given-data");
+    let est_rbd = estimate_rbd_fast(x.view(), &y, 10).expect("rbd-fast");
     // Both target the same population S_1 but with different
     // mechanisms. RBD-FAST has Plischke 2010 bias correction;
     // given-data partition has none. Observed pairwise diff at

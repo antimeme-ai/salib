@@ -75,7 +75,7 @@
 use std::f64::consts::PI;
 use std::fmt;
 
-use ndarray::Array2;
+use ndarray::{Array2, ArrayView2};
 use salib_core::{tree_sum, Distribution};
 
 /// DGSM index estimates per factor.
@@ -165,7 +165,7 @@ pub enum PoincareError {
 /// - [`DgsmError::ZeroVariance`] if `var_y ≤ 0`.
 /// - [`DgsmError::NegativePoincareConstant`] if any `poincare_constants[i] < 0`.
 pub fn estimate_dgsm(
-    gradients: &Array2<f64>,
+    gradients: ArrayView2<'_, f64>,
     poincare_constants: &[f64],
     var_y: f64,
 ) -> Result<DgsmIndices, DgsmError> {
@@ -237,7 +237,7 @@ pub enum FdKind {
 /// responsible for matching `eps` to the model's numerical
 /// precision.
 pub fn finite_difference_gradients<F>(
-    samples: &Array2<f64>,
+    samples: ArrayView2<'_, f64>,
     eps: f64,
     kind: FdKind,
     mut model: F,
@@ -360,34 +360,34 @@ mod tests {
     #[test]
     fn zero_d_errors() {
         let g = Array2::<f64>::zeros((10, 0));
-        assert_eq!(estimate_dgsm(&g, &[], 1.0).unwrap_err(), DgsmError::ZeroD);
+        assert_eq!(estimate_dgsm(g.view(), &[], 1.0).unwrap_err(), DgsmError::ZeroD);
     }
 
     #[test]
     fn empty_gradients_errors() {
         let g = Array2::<f64>::zeros((0, 3));
-        let err = estimate_dgsm(&g, &[1.0, 1.0, 1.0], 1.0).unwrap_err();
+        let err = estimate_dgsm(g.view(), &[1.0, 1.0, 1.0], 1.0).unwrap_err();
         assert_eq!(err, DgsmError::EmptyGradients);
     }
 
     #[test]
     fn shape_mismatch_errors() {
         let g = Array2::<f64>::zeros((10, 3));
-        let err = estimate_dgsm(&g, &[1.0, 1.0], 1.0).unwrap_err();
+        let err = estimate_dgsm(g.view(), &[1.0, 1.0], 1.0).unwrap_err();
         assert!(matches!(err, DgsmError::ShapeMismatch { .. }));
     }
 
     #[test]
     fn zero_variance_errors() {
         let g = Array2::<f64>::ones((10, 3));
-        let err = estimate_dgsm(&g, &[1.0, 1.0, 1.0], 0.0).unwrap_err();
+        let err = estimate_dgsm(g.view(), &[1.0, 1.0, 1.0], 0.0).unwrap_err();
         assert!(matches!(err, DgsmError::ZeroVariance { .. }));
     }
 
     #[test]
     fn negative_poincare_errors() {
         let g = Array2::<f64>::ones((10, 3));
-        let err = estimate_dgsm(&g, &[1.0, -0.5, 1.0], 1.0).unwrap_err();
+        let err = estimate_dgsm(g.view(), &[1.0, -0.5, 1.0], 1.0).unwrap_err();
         assert!(matches!(
             err,
             DgsmError::NegativePoincareConstant { factor: 1, .. }
@@ -404,7 +404,7 @@ mod tests {
             g[[k, 0]] = 2.0;
             g[[k, 1]] = 3.0;
         }
-        let est = estimate_dgsm(&g, &[1.0, 1.0], 1.0).unwrap();
+        let est = estimate_dgsm(g.view(), &[1.0, 1.0], 1.0).unwrap();
         assert!((est.vi[0] - 4.0).abs() < 1e-12);
         assert!((est.vi[1] - 9.0).abs() < 1e-12);
     }
@@ -416,7 +416,7 @@ mod tests {
         for k in 0..50 {
             g[[k, 0]] = 2.0;
         }
-        let est = estimate_dgsm(&g, &[0.5], 2.0).unwrap();
+        let est = estimate_dgsm(g.view(), &[0.5], 2.0).unwrap();
         assert!((est.st_upper[0] - 1.0).abs() < 1e-12);
     }
 
@@ -428,7 +428,7 @@ mod tests {
         for k in 0..100 {
             g[[k, 0]] = if k.is_multiple_of(2) { 1.0 } else { -1.0 };
         }
-        let est = estimate_dgsm(&g, &[1.0], 1.0).unwrap();
+        let est = estimate_dgsm(g.view(), &[1.0], 1.0).unwrap();
         assert_eq!(est.vi[0], 1.0);
     }
 
@@ -489,7 +489,7 @@ mod tests {
             samples[[k, 1]] = (k as f64) * 0.2;
         }
         let gradients =
-            finite_difference_gradients(&samples, 1e-6, FdKind::Forward, |x: &[f64]| {
+            finite_difference_gradients(samples.view(), 1e-6, FdKind::Forward, |x: &[f64]| {
                 2.0 * x[0] + 3.0 * x[1]
             });
         for k in 0..10 {
@@ -506,8 +506,8 @@ mod tests {
         let mut samples = Array2::<f64>::zeros((1, 1));
         samples[[0, 0]] = 1.0;
         let model = |x: &[f64]| x[0] * x[0];
-        let g_fwd = finite_difference_gradients(&samples, 1e-3, FdKind::Forward, model);
-        let g_ctr = finite_difference_gradients(&samples, 1e-3, FdKind::Central, model);
+        let g_fwd = finite_difference_gradients(samples.view(), 1e-3, FdKind::Forward, model);
+        let g_ctr = finite_difference_gradients(samples.view(), 1e-3, FdKind::Central, model);
         let err_fwd = (g_fwd[[0, 0]] - 2.0).abs();
         let err_ctr = (g_ctr[[0, 0]] - 2.0).abs();
         assert!(
@@ -526,7 +526,7 @@ mod tests {
         samples[[0, 1]] = 2.0;
         samples[[0, 2]] = 3.0;
         // f(x) = x_0 + x_1 + x_2 — gradient should be [1, 1, 1].
-        let g = finite_difference_gradients(&samples, 1e-5, FdKind::Central, |x: &[f64]| {
+        let g = finite_difference_gradients(samples.view(), 1e-5, FdKind::Central, |x: &[f64]| {
             x[0] + x[1] + x[2]
         });
         for i in 0..3 {
@@ -542,7 +542,7 @@ mod tests {
     fn fd_panics_on_zero_eps() {
         let samples = Array2::<f64>::zeros((1, 1));
         let result = std::panic::catch_unwind(|| {
-            finite_difference_gradients(&samples, 0.0, FdKind::Forward, |_x| 0.0)
+            finite_difference_gradients(samples.view(), 0.0, FdKind::Forward, |_x| 0.0)
         });
         assert!(result.is_err(), "FD with eps=0 should panic");
     }
@@ -557,8 +557,8 @@ mod tests {
             g[[k, 1]] = -(k as f64) * 0.2;
             g[[k, 2]] = (k as f64).sin();
         }
-        let a = estimate_dgsm(&g, &[1.0, 2.0, 0.5], 5.0).unwrap();
-        let b = estimate_dgsm(&g, &[1.0, 2.0, 0.5], 5.0).unwrap();
+        let a = estimate_dgsm(g.view(), &[1.0, 2.0, 0.5], 5.0).unwrap();
+        let b = estimate_dgsm(g.view(), &[1.0, 2.0, 0.5], 5.0).unwrap();
         assert_eq!(a.vi, b.vi);
         assert_eq!(a.st_upper, b.st_upper);
     }

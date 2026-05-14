@@ -91,7 +91,7 @@ fn given_data_sobol_ishigami_feature_runs() {
         .step("I estimate given-data Sobol indices", |w, _| {
             let (x, y) = build_inputs(w.n);
             w.estimate = Some(
-                estimate_given_data_sobol(&x, &y)
+                estimate_given_data_sobol(x.view(), &y)
                     .map_err(|e| StepError::new(format!("estimate: {e}")))?,
             );
             Ok(())

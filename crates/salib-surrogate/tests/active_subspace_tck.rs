@@ -112,7 +112,7 @@ fn active_subspace_feature_runs() {
                 w.hi = 1.0;
                 w.n = 64;
                 let x = lhs_inputs(w.n, 3, w.lo, w.hi);
-                let g = finite_difference_gradients(&x, 1e-6, FdKind::Central, |xs: &[f64]| {
+                let g = finite_difference_gradients(x.view(), 1e-6, FdKind::Central, |xs: &[f64]| {
                     xs[0] * xs[0] + 2.0 * xs[1] + xs[2].sin()
                 });
                 w.gradients = Some(g);
@@ -127,12 +127,12 @@ fn active_subspace_feature_runs() {
                 let model = w.model.ok_or_else(|| StepError::new("no model"))?;
                 let g = match model {
                     Model::Ridge => {
-                        finite_difference_gradients(&x, 1e-6, FdKind::Central, |xs: &[f64]| {
+                        finite_difference_gradients(x.view(), 1e-6, FdKind::Central, |xs: &[f64]| {
                             3.0 * xs[0] + 4.0 * xs[2]
                         })
                     }
                     Model::Ishigami => {
-                        finite_difference_gradients(&x, 1e-5, FdKind::Central, |xs: &[f64]| {
+                        finite_difference_gradients(x.view(), 1e-5, FdKind::Central, |xs: &[f64]| {
                             ishigami::ishigami(xs)
                         })
                     }
@@ -152,12 +152,12 @@ fn active_subspace_feature_runs() {
                 let model = w.model.ok_or_else(|| StepError::new("no model"))?;
                 let g = match model {
                     Model::Ridge => {
-                        finite_difference_gradients(&x, 1e-6, FdKind::Central, |xs: &[f64]| {
+                        finite_difference_gradients(x.view(), 1e-6, FdKind::Central, |xs: &[f64]| {
                             3.0 * xs[0] + 4.0 * xs[2]
                         })
                     }
                     Model::Ishigami => {
-                        finite_difference_gradients(&x, 1e-5, FdKind::Central, |xs: &[f64]| {
+                        finite_difference_gradients(x.view(), 1e-5, FdKind::Central, |xs: &[f64]| {
                             ishigami::ishigami(xs)
                         })
                     }
@@ -175,7 +175,7 @@ fn active_subspace_feature_runs() {
                 .as_ref()
                 .ok_or_else(|| StepError::new("no gradients"))?;
             w.result = Some(
-                compute_active_subspace(g, None)
+                compute_active_subspace(g.view(), None)
                     .map_err(|e| StepError::new(format!("active-subspace: {e}")))?,
             );
             Ok(())
@@ -187,8 +187,8 @@ fn active_subspace_feature_runs() {
                     .gradients
                     .as_ref()
                     .ok_or_else(|| StepError::new("no gradients"))?;
-                w.result = Some(compute_active_subspace(g, None).expect("a"));
-                w.result_b = Some(compute_active_subspace(g, None).expect("b"));
+                w.result = Some(compute_active_subspace(g.view(), None).expect("a"));
+                w.result_b = Some(compute_active_subspace(g.view(), None).expect("b"));
                 Ok(())
             },
         )

@@ -55,7 +55,7 @@ fn hdmr_ishigami_first_order() {
     let problem = ishigami::input_distribution();
     let analytic = ishigami::analytic_indices(7.0, 0.1);
 
-    let result: HdmrResult = estimate_hdmr(&x, &y, &problem, 2, 6).unwrap();
+    let result: HdmrResult = estimate_hdmr(x.view(), &y, &problem, 2, 6).unwrap();
 
     let tol = 0.05;
     assert!(
@@ -91,7 +91,7 @@ fn hdmr_ishigami_second_order() {
     // S2_{0,2} = analytic_s2[0][1] ≈ 0.244
     let expected_s2_02 = analytic_s2[0][1];
 
-    let result = estimate_hdmr(&x, &y, &problem, 2, 6).unwrap();
+    let result = estimate_hdmr(x.view(), &y, &problem, 2, 6).unwrap();
 
     let tol = 0.05;
     // result.second_order[0][1] = S2_{0, 0+1+1} = S2_{0,2}
@@ -112,7 +112,7 @@ fn hdmr_order_variances_sum_to_one() {
     let (x, y) = ishigami_sample(1024);
     let problem = ishigami::input_distribution();
 
-    let result = estimate_hdmr(&x, &y, &problem, 2, 4).unwrap();
+    let result = estimate_hdmr(x.view(), &y, &problem, 2, 4).unwrap();
 
     let sum: f64 = result.order_variance.iter().sum();
     // Sum of normalized order variances should be close to 1
@@ -132,7 +132,7 @@ fn hdmr_agrees_with_pce_sobol() {
     let (x, y) = ishigami_sample(4096);
     let problem = ishigami::input_distribution();
 
-    let hdmr = estimate_hdmr(&x, &y, &problem, 2, 6).unwrap();
+    let hdmr = estimate_hdmr(x.view(), &y, &problem, 2, 6).unwrap();
     let pce_sobol = sobol_indices_from_pce(&hdmr.pce).unwrap();
 
     let tol = 0.001;

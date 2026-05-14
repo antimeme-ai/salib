@@ -102,16 +102,16 @@ fn estimate_with_analytical_gradient(n: usize) -> DgsmIndices {
         }
     }
     let cp = ishigami_poincare_constants();
-    estimate_dgsm(&g, &cp, var_y).expect("estimate")
+    estimate_dgsm(g.view(), &cp, var_y).expect("estimate")
 }
 
 fn estimate_with_central_fd(n: usize, eps: f64) -> DgsmIndices {
     let (x, _y, var_y) = lhs_ishigami(n);
-    let g = finite_difference_gradients(&x, eps, FdKind::Central, |xi: &[f64]| {
+    let g = finite_difference_gradients(x.view(), eps, FdKind::Central, |xi: &[f64]| {
         ishigami::ishigami(&[xi[0], xi[1], xi[2]])
     });
     let cp = ishigami_poincare_constants();
-    estimate_dgsm(&g, &cp, var_y).expect("estimate")
+    estimate_dgsm(g.view(), &cp, var_y).expect("estimate")
 }
 
 // ── Artifact 1: canonical analytic recovery ─────────────────────────
@@ -218,10 +218,10 @@ fn dgsm_ishigami_forward_fd_recovers_within_o_eps() {
     // gradient elements have ~1e-6 error; squared gives ~1e-12;
     // averaged over N samples ν_i drift is tiny. Tolerance 0.01.
     let (x, _y, var_y) = lhs_ishigami(1024);
-    let g = finite_difference_gradients(&x, 1e-6, FdKind::Forward, |xi: &[f64]| {
+    let g = finite_difference_gradients(x.view(), 1e-6, FdKind::Forward, |xi: &[f64]| {
         ishigami::ishigami(&[xi[0], xi[1], xi[2]])
     });
     let cp = ishigami_poincare_constants();
-    let est = estimate_dgsm(&g, &cp, var_y).expect("estimate");
+    let est = estimate_dgsm(g.view(), &cp, var_y).expect("estimate");
     assert!((est.vi[1] - 24.5).abs() < 0.01);
 }

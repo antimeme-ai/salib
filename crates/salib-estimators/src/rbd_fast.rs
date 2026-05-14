@@ -52,6 +52,8 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::sync::Arc;
 
+use ndarray::ArrayView2;
+#[cfg(test)]
 use ndarray::Array2;
 use rustfft::{num_complex::Complex, Fft, FftPlanner};
 use salib_core::tree_sum;
@@ -151,7 +153,7 @@ pub enum RbdFastError {
 /// if all column values are well-ordered. The caller is responsible
 /// for `NaN`-free input.
 pub fn estimate_rbd_fast(
-    x: &Array2<f64>,
+    x: ArrayView2<'_, f64>,
     y: &[f64],
     harmonic: u32,
 ) -> Result<RbdFastIndices, RbdFastError> {
@@ -285,7 +287,7 @@ mod tests {
         let x = Array2::<f64>::zeros((10, 0));
         let y = vec![0.0; 10];
         assert_eq!(
-            estimate_rbd_fast(&x, &y, 4).unwrap_err(),
+            estimate_rbd_fast(x.view(), &y, 4).unwrap_err(),
             RbdFastError::ZeroD
         );
     }
@@ -294,7 +296,7 @@ mod tests {
     fn shape_mismatch_errors() {
         let x = Array2::<f64>::zeros((10, 3));
         let y = vec![0.0; 9];
-        let err = estimate_rbd_fast(&x, &y, 4).unwrap_err();
+        let err = estimate_rbd_fast(x.view(), &y, 4).unwrap_err();
         assert!(matches!(err, RbdFastError::ShapeMismatch { .. }));
     }
 
@@ -303,7 +305,7 @@ mod tests {
         let x = lhs_x(20, 3);
         let y = vec![0.0; 20];
         assert_eq!(
-            estimate_rbd_fast(&x, &y, 0).unwrap_err(),
+            estimate_rbd_fast(x.view(), &y, 0).unwrap_err(),
             RbdFastError::ZeroHarmonic
         );
     }
@@ -313,7 +315,7 @@ mod tests {
         // N=8, M=4 → need ≥ 9.
         let x = lhs_x(8, 3);
         let y = vec![0.0; 8];
-        let err = estimate_rbd_fast(&x, &y, 4).unwrap_err();
+        let err = estimate_rbd_fast(x.view(), &y, 4).unwrap_err();
         assert!(matches!(err, RbdFastError::InsufficientSamples { .. }));
     }
 
@@ -321,7 +323,7 @@ mod tests {
     fn constant_model_errors() {
         let x = lhs_x(64, 3);
         let y = vec![1.0; 64];
-        let err = estimate_rbd_fast(&x, &y, 4).unwrap_err();
+        let err = estimate_rbd_fast(x.view(), &y, 4).unwrap_err();
         assert_eq!(err, RbdFastError::ZeroVariance);
     }
 
@@ -331,7 +333,7 @@ mod tests {
     fn output_length_matches_d() {
         let x = lhs_x(64, 5);
         let y: Vec<f64> = (0..64_u32).map(f64::from).collect();
-        let est = estimate_rbd_fast(&x, &y, 4).unwrap();
+        let est = estimate_rbd_fast(x.view(), &y, 4).unwrap();
         assert_eq!(est.d(), 5);
         assert_eq!(est.s.len(), 5);
     }
@@ -345,7 +347,7 @@ mod tests {
         let d = 3;
         let x = lhs_x(n, d);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]]).collect();
-        let est = estimate_rbd_fast(&x, &y, 10).unwrap();
+        let est = estimate_rbd_fast(x.view(), &y, 10).unwrap();
         assert!(
             est.s[0] > 0.5,
             "S_0 should dominate for Y = X_0, got {}",
@@ -373,7 +375,7 @@ mod tests {
         let n = 256;
         let x = lhs_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]]).collect();
-        let est = estimate_rbd_fast(&x, &y, 10).unwrap();
+        let est = estimate_rbd_fast(x.view(), &y, 10).unwrap();
         // Just assert finite — negatives are allowed by design.
         for &v in &est.s {
             assert!(v.is_finite(), "estimate non-finite: {v}");
@@ -387,8 +389,8 @@ mod tests {
         let n = 64;
         let x = lhs_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]] + x[[k, 1]] * x[[k, 2]]).collect();
-        let a = estimate_rbd_fast(&x, &y, 4).unwrap();
-        let b = estimate_rbd_fast(&x, &y, 4).unwrap();
+        let a = estimate_rbd_fast(x.view(), &y, 4).unwrap();
+        let b = estimate_rbd_fast(x.view(), &y, 4).unwrap();
         assert_eq!(a.s, b.s);
     }
 
@@ -401,7 +403,7 @@ mod tests {
         let n = 256;
         let x = lhs_x(n, 3);
         let y: Vec<f64> = (0..n).map(|k| x[[k, 0]] + 2.0 * x[[k, 1]]).collect();
-        let est_a = estimate_rbd_fast(&x, &y, 10).unwrap();
+        let est_a = estimate_rbd_fast(x.view(), &y, 10).unwrap();
 
         // Reverse the input row order (equivalent permutation).
         let mut x_rev = Array2::<f64>::zeros((n, 3));
@@ -412,7 +414,7 @@ mod tests {
             }
             y_rev[k] = y[n - 1 - k];
         }
-        let est_b = estimate_rbd_fast(&x_rev, &y_rev, 10).unwrap();
+        let est_b = estimate_rbd_fast(x_rev.view(), &y_rev, 10).unwrap();
 
         // Permutation invariance is exact: argsort gives the same
         // post-sort sample order regardless of input row order, so

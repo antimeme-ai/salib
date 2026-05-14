@@ -157,7 +157,7 @@ fn ic_transformed_sobol_recovers_correlated_first_order_indices() {
     let x = iman_conover_transform(&x_indep, &r, &mut rng2).unwrap();
     let y: Vec<f64> = (0..n).map(|k| x[[k, 0]] + x[[k, 1]] + x[[k, 2]]).collect();
 
-    let result = estimate_given_data_sobol(&x, &y).expect("Sobol fit");
+    let result = estimate_given_data_sobol(x.view(), &y).expect("Sobol fit");
 
     // Tolerance: partition-based given-data Sobol' has bias from
     // the K-class smoothing; at N=8192 with K=class_count(8192)=22
@@ -201,7 +201,7 @@ fn independent_input_sobol_biases_correlated_first_order_indices() {
     let x = standard_normal_samples(n, 3, &mut rng);
     let y: Vec<f64> = (0..n).map(|k| x[[k, 0]] + x[[k, 1]] + x[[k, 2]]).collect();
 
-    let result = estimate_given_data_sobol(&x, &y).expect("Sobol fit");
+    let result = estimate_given_data_sobol(x.view(), &y).expect("Sobol fit");
     let s = &result.s1;
 
     // Independence Sobol' recovers ~1/3 each (loose tolerance:

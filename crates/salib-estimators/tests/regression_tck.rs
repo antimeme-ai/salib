@@ -114,7 +114,7 @@ fn regression_ishigami_feature_runs() {
                 ishigami_inputs(w.n)
             };
             w.estimate = Some(
-                estimate_regression_indices(&x, &y)
+                estimate_regression_indices(x.view(), &y)
                     .map_err(|e| StepError::new(format!("estimate: {e}")))?,
             );
             Ok(())

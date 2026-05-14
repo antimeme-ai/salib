@@ -90,7 +90,7 @@ fn borgonovo_ishigami_feature_runs() {
         .step("I estimate Borgonovo delta", |w, _| {
             let (x, y) = build_inputs(w.n);
             w.estimate = Some(
-                estimate_borgonovo_delta(&x, &y)
+                estimate_borgonovo_delta(x.view(), &y)
                     .map_err(|e| StepError::new(format!("estimate: {e}")))?,
             );
             Ok(())

@@ -93,7 +93,7 @@ fn rbd_fast_ishigami_feature_runs() {
         .step("I estimate RBD-FAST first-order indices", |w, _| {
             let (x, y) = build_inputs(w.n);
             w.estimate = Some(
-                estimate_rbd_fast(&x, &y, w.m)
+                estimate_rbd_fast(x.view(), &y, w.m)
                     .map_err(|e| StepError::new(format!("estimate: {e}")))?,
             );
             Ok(())

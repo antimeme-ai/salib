@@ -8,7 +8,7 @@
 
 use std::fmt;
 
-use ndarray::Array3;
+use ndarray::{Array3, ArrayView3};
 use rand::RngCore;
 use salib_core::RngState;
 
@@ -156,7 +156,7 @@ impl fmt::Display for GTheoryResult {
 }
 
 pub fn estimate_g_theory_pir(
-    grid: &Array3<f64>,
+    grid: ArrayView3<'_, f64>,
     design: GTheoryDesign,
 ) -> Result<GTheoryResult, GTheoryError> {
     if !matches!(design, GTheoryDesign::Crossed) {
@@ -345,7 +345,7 @@ pub fn estimate_g_theory_pir(
 }
 
 pub fn estimate_g_theory_pir_with_bootstrap(
-    grid: &Array3<f64>,
+    grid: ArrayView3<'_, f64>,
     design: GTheoryDesign,
     n_resamples: usize,
     alpha: f64,
@@ -368,7 +368,7 @@ pub fn estimate_g_theory_pir_with_bootstrap(
 
 #[allow(clippy::type_complexity)]
 pub fn bootstrap_g_theory_pir(
-    grid: &Array3<f64>,
+    grid: ArrayView3<'_, f64>,
     design: GTheoryDesign,
     n_resamples: usize,
     alpha: f64,
@@ -419,7 +419,7 @@ pub fn bootstrap_g_theory_pir(
                 }
             }
         }
-        match estimate_g_theory_pir(&resampled, design) {
+        match estimate_g_theory_pir(resampled.view(), design) {
             Ok(est) => {
                 let vals = [
                     est.sigma_p,
@@ -564,14 +564,14 @@ mod tests {
     fn zero_variance_errors() {
         let grid = Array3::<f64>::from_elem((2, 2, 2), 1.0);
         assert_eq!(
-            estimate_g_theory_pir(&grid, GTheoryDesign::Crossed).unwrap_err(),
+            estimate_g_theory_pir(grid.view(), GTheoryDesign::Crossed).unwrap_err(),
             GTheoryError::ZeroVariance
         );
     }
 
     #[test]
     fn unsupported_design_errors() {
-        let err = estimate_g_theory_pir(&grid(), GTheoryDesign::Nested).unwrap_err();
+        let err = estimate_g_theory_pir(grid().view(), GTheoryDesign::Nested).unwrap_err();
         assert_eq!(err, GTheoryError::UnsupportedDesign);
     }
 
@@ -586,7 +586,7 @@ mod tests {
                 }
             }
         }
-        let result = estimate_g_theory_pir(&grid, GTheoryDesign::Crossed).unwrap();
+        let result = estimate_g_theory_pir(grid.view(), GTheoryDesign::Crossed).unwrap();
         assert!(result.sigma_p.abs() < 1.0e-12);
         assert!(result.g_coefficient.abs() < 1.0e-12);
         assert!(result.phi_coefficient.abs() < 1.0e-12);
@@ -609,7 +609,7 @@ mod tests {
     fn bootstrap_invalid_params_error() {
         let mut rng = RngState::from_seed([0x55; 32]);
         let err =
-            bootstrap_g_theory_pir(&grid(), GTheoryDesign::Crossed, 0, 0.05, &mut rng).unwrap_err();
+            bootstrap_g_theory_pir(grid().view(), GTheoryDesign::Crossed, 0, 0.05, &mut rng).unwrap_err();
         assert_eq!(
             err,
             GTheoryBootstrapError::Bootstrap(BootstrapGivenDataError::ZeroResamples)
@@ -625,7 +625,7 @@ mod tests {
 
     #[test]
     fn d_study_projection_increases_with_more_items_and_raters() {
-        let base = estimate_g_theory_pir(&grid(), GTheoryDesign::Crossed).unwrap();
+        let base = estimate_g_theory_pir(grid().view(), GTheoryDesign::Crossed).unwrap();
         let current = project_g_theory_d_study(&base, 2, 2).unwrap();
         let expanded = project_g_theory_d_study(&base, 4, 4).unwrap();
         assert!(expanded.g_coefficient > current.g_coefficient);

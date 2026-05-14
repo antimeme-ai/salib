@@ -52,7 +52,7 @@ fn build_inputs() -> (Array2<f64>, Vec<f64>) {
 fn run_solver(solver: SparseSolver) -> (salib_surrogate::SobolFromPce, usize, usize) {
     let (x, y) = build_inputs();
     let (pce, diag) = fit_sparse_pce(
-        &x,
+        x.view(),
         &y,
         &[PolynomialFamily::Legendre; 3],
         MAX_DEGREE,

@@ -55,7 +55,7 @@ fn g_theory_d_study_feature_runs() {
     let runner = SyncRunner::new(World::default)
         .step("a crossed p x i x r G-theory estimate", |w, _| {
             w.estimate = Some(
-                estimate_g_theory_pir(&grid(), GTheoryDesign::Crossed)
+                estimate_g_theory_pir(grid().view(), GTheoryDesign::Crossed)
                     .map_err(|e| StepError::new(format!("estimate: {e}")))?,
             );
             Ok(())

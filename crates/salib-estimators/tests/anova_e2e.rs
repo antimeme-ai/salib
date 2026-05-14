@@ -85,7 +85,7 @@ fn parse_reference_csv(path: &str) -> std::collections::BTreeMap<String, f64> {
 
 #[test]
 fn anova_two_way_recovers_analytic_component_fractions() {
-    let est = estimate_anova_two_way(&two_way_grid()).expect("two-way estimate");
+    let est = estimate_anova_two_way(two_way_grid().view()).expect("two-way estimate");
     let tol = 1.0e-12;
     assert!((est.v_row - 0.310_344_827_586_206_9).abs() < tol);
     assert!((est.v_column - 0.137_931_034_482_758_62).abs() < tol);
@@ -95,7 +95,7 @@ fn anova_two_way_recovers_analytic_component_fractions() {
 
 #[test]
 fn anova_three_way_recovers_analytic_component_fractions() {
-    let est = estimate_anova_three_way(&three_way_grid()).expect("three-way estimate");
+    let est = estimate_anova_three_way(three_way_grid().view()).expect("three-way estimate");
     let tol = 1.0e-12;
     assert!((est.v_data - 0.393_700_787_401_574_8).abs() < tol);
     assert!((est.v_brittleness - 0.141_732_283_464_566_93).abs() < tol);
@@ -109,8 +109,8 @@ fn anova_three_way_recovers_analytic_component_fractions() {
 
 #[test]
 fn anova_component_fractions_sum_to_one() {
-    let two = estimate_anova_two_way(&two_way_grid()).expect("two-way estimate");
-    let three = estimate_anova_three_way(&three_way_grid()).expect("three-way estimate");
+    let two = estimate_anova_two_way(two_way_grid().view()).expect("two-way estimate");
+    let three = estimate_anova_three_way(three_way_grid().view()).expect("three-way estimate");
 
     let two_sum = two.v_row + two.v_column + two.v_interaction + two.v_residual;
     let three_sum = three.v_data
@@ -128,8 +128,8 @@ fn anova_component_fractions_sum_to_one() {
 
 #[test]
 fn anova_matches_frozen_python_reference_fixture() {
-    let two = estimate_anova_two_way(&two_way_grid()).expect("two-way estimate");
-    let three = estimate_anova_three_way(&three_way_grid()).expect("three-way estimate");
+    let two = estimate_anova_two_way(two_way_grid().view()).expect("two-way estimate");
+    let three = estimate_anova_three_way(three_way_grid().view()).expect("three-way estimate");
     let two_ref = parse_reference_csv("anova_two_way_reference.csv");
     let three_ref = parse_reference_csv("anova_three_way_reference.csv");
     let tol = 1.0e-12;
@@ -151,9 +151,9 @@ fn anova_matches_frozen_python_reference_fixture() {
 
 #[test]
 fn anova_two_way_variance_fractions_are_affine_invariant() {
-    let baseline = estimate_anova_two_way(&two_way_grid()).expect("two-way estimate");
+    let baseline = estimate_anova_two_way(two_way_grid().view()).expect("two-way estimate");
     let transformed =
-        estimate_anova_two_way(&affine_two_way_grid(7.5, 11.0)).expect("affine two-way estimate");
+        estimate_anova_two_way(affine_two_way_grid(7.5, 11.0).view()).expect("affine two-way estimate");
     let tol = 1.0e-12;
 
     assert!((baseline.v_row - transformed.v_row).abs() < tol);
@@ -164,8 +164,8 @@ fn anova_two_way_variance_fractions_are_affine_invariant() {
 
 #[test]
 fn anova_three_way_variance_fractions_are_invariant_to_factor_level_relabeling() {
-    let baseline = estimate_anova_three_way(&three_way_grid()).expect("three-way estimate");
-    let permuted = estimate_anova_three_way(&permuted_three_way_grid()).expect("permuted estimate");
+    let baseline = estimate_anova_three_way(three_way_grid().view()).expect("three-way estimate");
+    let permuted = estimate_anova_three_way(permuted_three_way_grid().view()).expect("permuted estimate");
     let tol = 1.0e-12;
 
     assert!((baseline.v_data - permuted.v_data).abs() < tol);
@@ -183,9 +183,9 @@ fn anova_three_way_variance_fractions_are_invariant_to_factor_level_relabeling()
 fn anova_two_way_bootstrap_is_deterministic_and_contains_point_estimate() {
     let mut rng_a = RngState::from_seed([0x11; 32]);
     let mut rng_b = RngState::from_seed([0x11; 32]);
-    let a = estimate_anova_two_way_with_bootstrap(&two_way_grid(), 128, 0.05, &mut rng_a)
+    let a = estimate_anova_two_way_with_bootstrap(two_way_grid().view(), 128, 0.05, &mut rng_a)
         .expect("two-way bootstrap estimate");
-    let b = estimate_anova_two_way_with_bootstrap(&two_way_grid(), 128, 0.05, &mut rng_b)
+    let b = estimate_anova_two_way_with_bootstrap(two_way_grid().view(), 128, 0.05, &mut rng_b)
         .expect("two-way bootstrap estimate");
 
     assert_eq!(a.variance_fraction_ci_low, b.variance_fraction_ci_low);
@@ -203,9 +203,9 @@ fn anova_two_way_bootstrap_is_deterministic_and_contains_point_estimate() {
 fn anova_three_way_bootstrap_is_deterministic_and_contains_point_estimate() {
     let mut rng_a = RngState::from_seed([0x22; 32]);
     let mut rng_b = RngState::from_seed([0x22; 32]);
-    let a = estimate_anova_three_way_with_bootstrap(&three_way_grid(), 128, 0.05, &mut rng_a)
+    let a = estimate_anova_three_way_with_bootstrap(three_way_grid().view(), 128, 0.05, &mut rng_a)
         .expect("three-way bootstrap estimate");
-    let b = estimate_anova_three_way_with_bootstrap(&three_way_grid(), 128, 0.05, &mut rng_b)
+    let b = estimate_anova_three_way_with_bootstrap(three_way_grid().view(), 128, 0.05, &mut rng_b)
         .expect("three-way bootstrap estimate");
 
     assert_eq!(a.variance_fraction_ci_low, b.variance_fraction_ci_low);
@@ -221,8 +221,8 @@ fn anova_three_way_bootstrap_is_deterministic_and_contains_point_estimate() {
 
 #[test]
 fn anova_inferential_statistics_match_ratified_denominators() {
-    let two = estimate_anova_two_way(&two_way_grid()).expect("two-way estimate");
-    let three = estimate_anova_three_way(&three_way_grid()).expect("three-way estimate");
+    let two = estimate_anova_two_way(two_way_grid().view()).expect("two-way estimate");
+    let three = estimate_anova_three_way(three_way_grid().view()).expect("three-way estimate");
     let tol = 1.0e-12;
 
     assert!((two.f_row.unwrap() - 0.5625).abs() < tol);

@@ -75,7 +75,7 @@ fn lhs_ishigami_inputs(n: usize) -> (Array2<f64>, Vec<f64>) {
 
 fn run_at_n(n: usize) -> BorgonovoIndices {
     let (x, y) = lhs_ishigami_inputs(n);
-    estimate_borgonovo_delta(&x, &y).expect("estimate")
+    estimate_borgonovo_delta(x.view(), &y).expect("estimate")
 }
 
 // ── Artifact 1: canonical analytic recovery ─────────────────────────

@@ -67,7 +67,7 @@ fn g_theory_feature_runs() {
         )
         .step("I estimate G-theory p x i x r components", |w, _| {
             w.result = Some(
-                estimate_g_theory_pir(&grid(), GTheoryDesign::Crossed)
+                estimate_g_theory_pir(grid().view(), GTheoryDesign::Crossed)
                     .map_err(|e| StepError::new(format!("estimate: {e}")))?,
             );
             Ok(())
@@ -78,7 +78,7 @@ fn g_theory_feature_runs() {
                 let mut rng = RngState::from_seed([0x44; 32]);
                 w.result = Some(
                     estimate_g_theory_pir_with_bootstrap(
-                        &grid(),
+                        grid().view(),
                         GTheoryDesign::Crossed,
                         128,
                         0.05,
