@@ -10,8 +10,8 @@ use salib_estimators::{
     anova::{AnovaThreeWayResult, AnovaTwoWayResult},
     bootstrap_given_data::BootstrapCi,
     borgonovo::BorgonovoIndices,
-    discrepancy::DiscrepancyResult,
     dgsm::{DgsmIndices, FdKind},
+    discrepancy::DiscrepancyResult,
     fast::FastIndices,
     fractional_factorial::FractionalFactorialEffects,
     g_theory::{DStudyPoint, GTheoryDesign, GTheoryResult},
@@ -159,9 +159,7 @@ fn fast_indices_roundtrip() {
 
 #[test]
 fn borgonovo_indices_roundtrip() {
-    roundtrip_json::<BorgonovoIndices>(
-        r#"{"delta": [0.1, 0.2, 0.3]}"#,
-    );
+    roundtrip_json::<BorgonovoIndices>(r#"{"delta": [0.1, 0.2, 0.3]}"#);
 }
 
 // ── regression.rs ──────────────────────────────────────────────────────
@@ -199,9 +197,7 @@ fn pawn_indices_roundtrip() {
 
 #[test]
 fn dgsm_indices_roundtrip() {
-    roundtrip_json::<DgsmIndices>(
-        r#"{"vi": [1.5, 0.3, 0.0], "st_upper": [0.8, 0.15, 0.0]}"#,
-    );
+    roundtrip_json::<DgsmIndices>(r#"{"vi": [1.5, 0.3, 0.0], "st_upper": [0.8, 0.15, 0.0]}"#);
 }
 
 #[test]

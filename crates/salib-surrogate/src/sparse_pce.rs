@@ -77,9 +77,9 @@
 )]
 
 use nalgebra::{DMatrix, DVector};
-use ndarray::ArrayView2;
 #[cfg(test)]
 use ndarray::Array2;
+use ndarray::ArrayView2;
 
 use crate::multi_index::{enumerate_hyperbolic, enumerate_total_degree, MultiIndex};
 use crate::pce::{PceError, PolynomialChaos};

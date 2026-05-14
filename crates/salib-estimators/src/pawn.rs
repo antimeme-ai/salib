@@ -55,9 +55,9 @@
 use std::cmp::Ordering;
 use std::fmt;
 
-use ndarray::ArrayView2;
 #[cfg(test)]
 use ndarray::Array2;
+use ndarray::ArrayView2;
 use salib_core::tree_sum;
 
 /// PAWN sensitivity index estimates per factor — five aggregation
@@ -93,8 +93,16 @@ impl fmt::Display for PawnIndices {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "PAWN indices (d={})", self.d())?;
         writeln!(f)?;
-        writeln!(f, "  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}", "Factor", "median", "mean", "max", "min", "CV")?;
-        writeln!(f, "  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}", "------", "------", "------", "------", "------", "------")?;
+        writeln!(
+            f,
+            "  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}",
+            "Factor", "median", "mean", "max", "min", "CV"
+        )?;
+        writeln!(
+            f,
+            "  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}",
+            "------", "------", "------", "------", "------", "------"
+        )?;
         for i in 0..self.d() {
             writeln!(
                 f,
@@ -339,7 +347,10 @@ mod tests {
     fn zero_d_errors() {
         let x = Array2::<f64>::zeros((100, 0));
         let y = vec![0.0; 100];
-        assert_eq!(estimate_pawn(x.view(), &y, 10).unwrap_err(), PawnError::ZeroD);
+        assert_eq!(
+            estimate_pawn(x.view(), &y, 10).unwrap_err(),
+            PawnError::ZeroD
+        );
     }
 
     #[test]

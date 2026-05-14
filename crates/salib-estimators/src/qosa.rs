@@ -96,9 +96,9 @@
 
 use std::fmt;
 
-use ndarray::ArrayView2;
 #[cfg(test)]
 use ndarray::Array2;
+use ndarray::ArrayView2;
 use salib_core::tree_sum;
 
 use crate::borgonovo::{class_count, ordinal_ranks};
@@ -134,8 +134,17 @@ impl QosaIndices {
 
 impl fmt::Display for QosaIndices {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "QOSA indices (d={}, \u{03b1}={:.2})", self.d(), self.alpha)?;
-        writeln!(f, "  quantile = {:.4}  CTE = {:.4}", self.global_quantile, self.global_cte)?;
+        writeln!(
+            f,
+            "QOSA indices (d={}, \u{03b1}={:.2})",
+            self.d(),
+            self.alpha
+        )?;
+        writeln!(
+            f,
+            "  quantile = {:.4}  CTE = {:.4}",
+            self.global_quantile, self.global_cte
+        )?;
         writeln!(f)?;
         writeln!(f, "  {:>8}  {:>8}", "Factor", "S")?;
         writeln!(f, "  {:>8}  {:>8}", "------", "------")?;
@@ -188,7 +197,11 @@ pub enum QosaError {
 /// - [`QosaError::DegenerateTail`] if the global CTE collapses onto
 ///   the global mean (numerically `< 1e-12 · |Ȳ| + 1e-15`); the
 ///   index denominator vanishes.
-pub fn estimate_qosa(x: ArrayView2<'_, f64>, y: &[f64], alpha: f64) -> Result<QosaIndices, QosaError> {
+pub fn estimate_qosa(
+    x: ArrayView2<'_, f64>,
+    y: &[f64],
+    alpha: f64,
+) -> Result<QosaIndices, QosaError> {
     let n = x.nrows();
     let d = x.ncols();
     if d == 0 {
@@ -344,7 +357,10 @@ mod tests {
     fn zero_d_errors() {
         let x = Array2::<f64>::zeros((100, 0));
         let y = vec![0.0; 100];
-        assert_eq!(estimate_qosa(x.view(), &y, 0.5).unwrap_err(), QosaError::ZeroD);
+        assert_eq!(
+            estimate_qosa(x.view(), &y, 0.5).unwrap_err(),
+            QosaError::ZeroD
+        );
     }
 
     #[test]

@@ -45,7 +45,8 @@ fn regression_indices_display() {
 
 #[test]
 fn bootstrap_ci_display() {
-    let json = r#"{"ci_low":[0.1,0.2],"ci_high":[0.5,0.8],"n_resamples":1000,"alpha":0.05,"n_skipped":3}"#;
+    let json =
+        r#"{"ci_low":[0.1,0.2],"ci_high":[0.5,0.8],"n_resamples":1000,"alpha":0.05,"n_skipped":3}"#;
     let b: BootstrapCi = serde_json::from_str(json).unwrap();
     let output = format!("{b}");
     assert!(output.contains("B=1000"));

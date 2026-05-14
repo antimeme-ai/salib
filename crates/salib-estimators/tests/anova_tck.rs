@@ -164,10 +164,13 @@ fn anova_factorial_feature_runs() {
             |w, _| {
                 let mut rng = RngState::from_seed([0x22; 32]);
                 w.three_way = Some(
-                    estimate_anova_three_way_with_bootstrap(three_way_grid().view(), 128, 0.05, &mut rng)
-                        .map_err(|e| {
-                            StepError::new(format!("three-way bootstrap estimate: {e}"))
-                        })?,
+                    estimate_anova_three_way_with_bootstrap(
+                        three_way_grid().view(),
+                        128,
+                        0.05,
+                        &mut rng,
+                    )
+                    .map_err(|e| StepError::new(format!("three-way bootstrap estimate: {e}")))?,
                 );
                 Ok(())
             },

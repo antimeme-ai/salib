@@ -150,7 +150,11 @@ impl fmt::Display for GTheoryResult {
         writeln!(f, "    \u{03c3}\u{00b2}(ir)  = {:.4}", self.sigma_ir)?;
         writeln!(f, "    \u{03c3}\u{00b2}(pir) = {:.4}", self.sigma_pir)?;
         writeln!(f)?;
-        writeln!(f, "  G = {:.4}  \u{03a6} = {:.4}", self.g_coefficient, self.phi_coefficient)?;
+        writeln!(
+            f,
+            "  G = {:.4}  \u{03a6} = {:.4}",
+            self.g_coefficient, self.phi_coefficient
+        )?;
         Ok(())
     }
 }
@@ -608,8 +612,8 @@ mod tests {
     #[test]
     fn bootstrap_invalid_params_error() {
         let mut rng = RngState::from_seed([0x55; 32]);
-        let err =
-            bootstrap_g_theory_pir(grid().view(), GTheoryDesign::Crossed, 0, 0.05, &mut rng).unwrap_err();
+        let err = bootstrap_g_theory_pir(grid().view(), GTheoryDesign::Crossed, 0, 0.05, &mut rng)
+            .unwrap_err();
         assert_eq!(
             err,
             GTheoryBootstrapError::Bootstrap(BootstrapGivenDataError::ZeroResamples)

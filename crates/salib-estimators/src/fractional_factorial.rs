@@ -37,10 +37,18 @@ pub struct FractionalFactorialEffects {
 
 impl fmt::Display for FractionalFactorialEffects {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "Fractional factorial effects (d={}, runs={})", self.dim, self.n_runs)?;
+        writeln!(
+            f,
+            "Fractional factorial effects (d={}, runs={})",
+            self.dim, self.n_runs
+        )?;
         writeln!(f)?;
         writeln!(f, "  {:>8}  {:>10}  {:>10}", "Factor", "Effect", "|Effect|")?;
-        writeln!(f, "  {:>8}  {:>10}  {:>10}", "------", "--------", "--------")?;
+        writeln!(
+            f,
+            "  {:>8}  {:>10}  {:>10}",
+            "------", "--------", "--------"
+        )?;
         for i in 0..self.dim {
             writeln!(
                 f,

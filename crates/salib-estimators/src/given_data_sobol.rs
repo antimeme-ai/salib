@@ -62,9 +62,9 @@
 use std::cmp::Ordering;
 use std::fmt;
 
-use ndarray::ArrayView2;
 #[cfg(test)]
 use ndarray::Array2;
+use ndarray::ArrayView2;
 use salib_core::tree_sum;
 
 /// First-order Sobol' index estimates from given-data partition.

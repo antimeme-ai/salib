@@ -74,9 +74,9 @@ use std::cmp::Ordering;
 use std::f64::consts::PI;
 use std::fmt;
 
-use ndarray::ArrayView2;
 #[cfg(test)]
 use ndarray::Array2;
+use ndarray::ArrayView2;
 use salib_core::tree_sum;
 
 /// Borgonovo `δ` estimates per factor.

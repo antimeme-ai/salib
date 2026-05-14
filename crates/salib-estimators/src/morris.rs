@@ -191,8 +191,16 @@ impl fmt::Display for MorrisEffects {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Morris effects (r={}, d={})", self.r, self.d)?;
         writeln!(f)?;
-        writeln!(f, "  {:>8}  {:>8}  {:>8}  {:>8}", "Factor", "\u{03bc}", "\u{03bc}*", "\u{03c3}")?;
-        writeln!(f, "  {:>8}  {:>8}  {:>8}  {:>8}", "------", "------", "------", "------")?;
+        writeln!(
+            f,
+            "  {:>8}  {:>8}  {:>8}  {:>8}",
+            "Factor", "\u{03bc}", "\u{03bc}*", "\u{03c3}"
+        )?;
+        writeln!(
+            f,
+            "  {:>8}  {:>8}  {:>8}  {:>8}",
+            "------", "------", "------", "------"
+        )?;
         for i in 0..self.d {
             writeln!(
                 f,

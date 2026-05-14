@@ -74,7 +74,8 @@ fn build_pce_inputs() -> (Array2<f64>, Vec<f64>) {
 #[test]
 fn pce_ishigami_canonical_recovers_published_indices_within_pce_tolerance() {
     let (x, y) = build_pce_inputs();
-    let pce = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], MAX_DEGREE).expect("PCE fit");
+    let pce =
+        fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], MAX_DEGREE).expect("PCE fit");
     let sobol = sobol_indices_from_pce(&pce).expect("Sobol from PCE");
 
     let analytic: SobolIndicesAnalytic = ishigami::analytic_indices(7.0, 0.1);
@@ -122,7 +123,8 @@ fn pce_ishigami_first_order_at_most_total_order() {
     // (sub-sum vs full-sum over multi-indices); no MC tolerance
     // needed beyond clamp-induced rounding.
     let (x, y) = build_pce_inputs();
-    let pce = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], MAX_DEGREE).expect("PCE fit");
+    let pce =
+        fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], MAX_DEGREE).expect("PCE fit");
     let sobol = sobol_indices_from_pce(&pce).expect("Sobol from PCE");
     for i in 0..3 {
         assert!(
@@ -138,7 +140,8 @@ fn pce_ishigami_first_order_at_most_total_order() {
 fn pce_ishigami_first_order_sum_at_most_one() {
     // Σ S_i ≤ 1 by Sobol' decomposition — exact for PCE.
     let (x, y) = build_pce_inputs();
-    let pce = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], MAX_DEGREE).expect("PCE fit");
+    let pce =
+        fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], MAX_DEGREE).expect("PCE fit");
     let sobol = sobol_indices_from_pce(&pce).expect("Sobol from PCE");
     let sum: f64 = sobol.first_order.iter().sum();
     assert!(sum <= 1.0 + 1e-12, "Σ S_i = {sum}");
@@ -201,8 +204,10 @@ fn pce_ishigami_error_decreases_with_degree() {
 #[test]
 fn pce_ishigami_is_deterministic() {
     let (x, y) = build_pce_inputs();
-    let a = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], MAX_DEGREE).expect("PCE fit a");
-    let b = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], MAX_DEGREE).expect("PCE fit b");
+    let a = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], MAX_DEGREE)
+        .expect("PCE fit a");
+    let b = fit_full_pce(x.view(), &y, &[PolynomialFamily::Legendre; 3], MAX_DEGREE)
+        .expect("PCE fit b");
     assert_eq!(a.coefficients, b.coefficients);
     let sa = sobol_indices_from_pce(&a).expect("Sobol a");
     let sb = sobol_indices_from_pce(&b).expect("Sobol b");

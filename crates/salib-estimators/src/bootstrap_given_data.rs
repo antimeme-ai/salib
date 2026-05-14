@@ -126,12 +126,24 @@ pub struct BootstrapCi {
 impl fmt::Display for BootstrapCi {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let d = self.ci_low.len();
-        writeln!(f, "Bootstrap CI (B={}, \u{03b1}={:.2}, skipped={})", self.n_resamples, self.alpha, self.n_skipped)?;
+        writeln!(
+            f,
+            "Bootstrap CI (B={}, \u{03b1}={:.2}, skipped={})",
+            self.n_resamples, self.alpha, self.n_skipped
+        )?;
         writeln!(f)?;
         writeln!(f, "  {:>8}  {:>10}  {:>10}", "Factor", "CI_low", "CI_high")?;
-        writeln!(f, "  {:>8}  {:>10}  {:>10}", "------", "--------", "--------")?;
+        writeln!(
+            f,
+            "  {:>8}  {:>10}  {:>10}",
+            "------", "--------", "--------"
+        )?;
         for i in 0..d {
-            writeln!(f, "  {:>8}  {:>10.4}  {:>10.4}", i, self.ci_low[i], self.ci_high[i])?;
+            writeln!(
+                f,
+                "  {:>8}  {:>10.4}  {:>10.4}",
+                i, self.ci_low[i], self.ci_high[i]
+            )?;
         }
         Ok(())
     }
@@ -575,16 +587,17 @@ mod tests {
         let (x, y) = linear_gaussian(64, 0x42);
         let mut rng = fresh_rng();
         let mut call_count = 0_usize;
-        let estimator = |xx: ArrayView2<'_, f64>, yy: &[f64]| -> Result<Vec<f64>, BoxedEstimatorError> {
-            call_count += 1;
-            // Fail every third call.
-            if call_count.is_multiple_of(3) {
-                return Err(boxed(SyntheticErr));
-            }
-            estimate_given_data_sobol(xx, yy)
-                .map(|r| r.s1)
-                .map_err(boxed)
-        };
+        let estimator =
+            |xx: ArrayView2<'_, f64>, yy: &[f64]| -> Result<Vec<f64>, BoxedEstimatorError> {
+                call_count += 1;
+                // Fail every third call.
+                if call_count.is_multiple_of(3) {
+                    return Err(boxed(SyntheticErr));
+                }
+                estimate_given_data_sobol(xx, yy)
+                    .map(|r| r.s1)
+                    .map_err(boxed)
+            };
         let ci = bootstrap_given_data(x.view(), &y, 30, 0.05, &mut rng, estimator).unwrap();
         assert_eq!(ci.n_skipped, 10);
         assert_eq!(ci.n_resamples, 30);

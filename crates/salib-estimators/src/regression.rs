@@ -93,10 +93,22 @@ impl RegressionIndices {
 impl fmt::Display for RegressionIndices {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Regression indices (d={})", self.d())?;
-        writeln!(f, "  R\u{00b2}(linear) = {:.4}  R\u{00b2}(rank) = {:.4}", self.r2_linear, self.r2_rank)?;
+        writeln!(
+            f,
+            "  R\u{00b2}(linear) = {:.4}  R\u{00b2}(rank) = {:.4}",
+            self.r2_linear, self.r2_rank
+        )?;
         writeln!(f)?;
-        writeln!(f, "  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}", "Factor", "SRC", "SRRC", "PCC", "PRCC")?;
-        writeln!(f, "  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}", "------", "------", "------", "------", "------")?;
+        writeln!(
+            f,
+            "  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}",
+            "Factor", "SRC", "SRRC", "PCC", "PRCC"
+        )?;
+        writeln!(
+            f,
+            "  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}",
+            "------", "------", "------", "------", "------"
+        )?;
         for i in 0..self.d() {
             writeln!(
                 f,
@@ -283,7 +295,11 @@ fn solve_ols(design: &DMatrix<f64>, y: &DVector<f64>) -> Result<DVector<f64>, Re
 
 /// Partial correlation between `X[:, j]` and `y`, controlling for
 /// the other columns of `X`.
-fn partial_correlation(x: ArrayView2<'_, f64>, y: &[f64], j: usize) -> Result<f64, RegressionError> {
+fn partial_correlation(
+    x: ArrayView2<'_, f64>,
+    y: &[f64],
+    j: usize,
+) -> Result<f64, RegressionError> {
     let n = x.nrows();
     let d = x.ncols();
 

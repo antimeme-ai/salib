@@ -65,9 +65,9 @@
 use std::fmt;
 
 use nalgebra::{DMatrix, DVector};
-use ndarray::ArrayView2;
 #[cfg(test)]
 use ndarray::Array2;
+use ndarray::ArrayView2;
 use salib_core::tree_sum;
 
 use crate::multi_index::{enumerate_total_degree, total_degree_basis_size, MultiIndex};

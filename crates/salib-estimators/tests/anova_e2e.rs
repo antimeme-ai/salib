@@ -152,8 +152,8 @@ fn anova_matches_frozen_python_reference_fixture() {
 #[test]
 fn anova_two_way_variance_fractions_are_affine_invariant() {
     let baseline = estimate_anova_two_way(two_way_grid().view()).expect("two-way estimate");
-    let transformed =
-        estimate_anova_two_way(affine_two_way_grid(7.5, 11.0).view()).expect("affine two-way estimate");
+    let transformed = estimate_anova_two_way(affine_two_way_grid(7.5, 11.0).view())
+        .expect("affine two-way estimate");
     let tol = 1.0e-12;
 
     assert!((baseline.v_row - transformed.v_row).abs() < tol);
@@ -165,7 +165,8 @@ fn anova_two_way_variance_fractions_are_affine_invariant() {
 #[test]
 fn anova_three_way_variance_fractions_are_invariant_to_factor_level_relabeling() {
     let baseline = estimate_anova_three_way(three_way_grid().view()).expect("three-way estimate");
-    let permuted = estimate_anova_three_way(permuted_three_way_grid().view()).expect("permuted estimate");
+    let permuted =
+        estimate_anova_three_way(permuted_three_way_grid().view()).expect("permuted estimate");
     let tol = 1.0e-12;
 
     assert!((baseline.v_data - permuted.v_data).abs() < tol);

@@ -112,9 +112,10 @@ fn active_subspace_feature_runs() {
                 w.hi = 1.0;
                 w.n = 64;
                 let x = lhs_inputs(w.n, 3, w.lo, w.hi);
-                let g = finite_difference_gradients(x.view(), 1e-6, FdKind::Central, |xs: &[f64]| {
-                    xs[0] * xs[0] + 2.0 * xs[1] + xs[2].sin()
-                });
+                let g =
+                    finite_difference_gradients(x.view(), 1e-6, FdKind::Central, |xs: &[f64]| {
+                        xs[0] * xs[0] + 2.0 * xs[1] + xs[2].sin()
+                    });
                 w.gradients = Some(g);
                 Ok(())
             },
@@ -126,16 +127,18 @@ fn active_subspace_feature_runs() {
                 let x = lhs_inputs(w.n, 3, w.lo, w.hi);
                 let model = w.model.ok_or_else(|| StepError::new("no model"))?;
                 let g = match model {
-                    Model::Ridge => {
-                        finite_difference_gradients(x.view(), 1e-6, FdKind::Central, |xs: &[f64]| {
-                            3.0 * xs[0] + 4.0 * xs[2]
-                        })
-                    }
-                    Model::Ishigami => {
-                        finite_difference_gradients(x.view(), 1e-5, FdKind::Central, |xs: &[f64]| {
-                            ishigami::ishigami(xs)
-                        })
-                    }
+                    Model::Ridge => finite_difference_gradients(
+                        x.view(),
+                        1e-6,
+                        FdKind::Central,
+                        |xs: &[f64]| 3.0 * xs[0] + 4.0 * xs[2],
+                    ),
+                    Model::Ishigami => finite_difference_gradients(
+                        x.view(),
+                        1e-5,
+                        FdKind::Central,
+                        |xs: &[f64]| ishigami::ishigami(xs),
+                    ),
                     Model::Polynomial => {
                         return Err(StepError::new("polynomial uses different fixture"));
                     }
@@ -151,16 +154,18 @@ fn active_subspace_feature_runs() {
                 let x = lhs_inputs(w.n, 3, w.lo, w.hi);
                 let model = w.model.ok_or_else(|| StepError::new("no model"))?;
                 let g = match model {
-                    Model::Ridge => {
-                        finite_difference_gradients(x.view(), 1e-6, FdKind::Central, |xs: &[f64]| {
-                            3.0 * xs[0] + 4.0 * xs[2]
-                        })
-                    }
-                    Model::Ishigami => {
-                        finite_difference_gradients(x.view(), 1e-5, FdKind::Central, |xs: &[f64]| {
-                            ishigami::ishigami(xs)
-                        })
-                    }
+                    Model::Ridge => finite_difference_gradients(
+                        x.view(),
+                        1e-6,
+                        FdKind::Central,
+                        |xs: &[f64]| 3.0 * xs[0] + 4.0 * xs[2],
+                    ),
+                    Model::Ishigami => finite_difference_gradients(
+                        x.view(),
+                        1e-5,
+                        FdKind::Central,
+                        |xs: &[f64]| ishigami::ishigami(xs),
+                    ),
                     Model::Polynomial => {
                         return Err(StepError::new("polynomial uses different fixture"));
                     }

@@ -24,9 +24,9 @@
 
 use std::fmt;
 
-use ndarray::ArrayView2;
 #[cfg(test)]
 use ndarray::Array2;
+use ndarray::ArrayView2;
 use thiserror::Error;
 
 /// Discrepancy results for a sample matrix in `[0, 1]^d`.
@@ -72,7 +72,9 @@ impl fmt::Display for DiscrepancyResult {
 /// Returns `Err` if the matrix is empty or any value is outside
 /// `[0, 1]`.
 #[allow(clippy::cast_precision_loss)]
-pub fn compute_discrepancy(sample: ArrayView2<'_, f64>) -> Result<DiscrepancyResult, DiscrepancyError> {
+pub fn compute_discrepancy(
+    sample: ArrayView2<'_, f64>,
+) -> Result<DiscrepancyResult, DiscrepancyError> {
     let n = sample.nrows();
     let d = sample.ncols();
     if n == 0 {

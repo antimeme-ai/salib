@@ -134,9 +134,10 @@ fn dgsm_ishigami_feature_runs() {
             "I estimate DGSM with central finite-difference at eps 1e-5",
             |w, _| {
                 let (x, _y, var_y) = build_inputs(w.n);
-                let g = finite_difference_gradients(x.view(), 1e-5, FdKind::Central, |xi: &[f64]| {
-                    ishigami::ishigami(&[xi[0], xi[1], xi[2]])
-                });
+                let g =
+                    finite_difference_gradients(x.view(), 1e-5, FdKind::Central, |xi: &[f64]| {
+                        ishigami::ishigami(&[xi[0], xi[1], xi[2]])
+                    });
                 let cp = cp_uniform_neg_pi_pi();
                 w.estimate_fd = Some(
                     estimate_dgsm(g.view(), &cp, var_y)

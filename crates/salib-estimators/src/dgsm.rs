@@ -108,10 +108,18 @@ impl fmt::Display for DgsmIndices {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "DGSM indices (d={})", self.d())?;
         writeln!(f)?;
-        writeln!(f, "  {:>8}  {:>8}  {:>10}", "Factor", "\u{03bd}", "ST_upper")?;
+        writeln!(
+            f,
+            "  {:>8}  {:>8}  {:>10}",
+            "Factor", "\u{03bd}", "ST_upper"
+        )?;
         writeln!(f, "  {:>8}  {:>8}  {:>10}", "------", "------", "--------")?;
         for i in 0..self.d() {
-            writeln!(f, "  {:>8}  {:>8.4}  {:>10.4}", i, self.vi[i], self.st_upper[i])?;
+            writeln!(
+                f,
+                "  {:>8}  {:>8.4}  {:>10.4}",
+                i, self.vi[i], self.st_upper[i]
+            )?;
         }
         Ok(())
     }
@@ -360,7 +368,10 @@ mod tests {
     #[test]
     fn zero_d_errors() {
         let g = Array2::<f64>::zeros((10, 0));
-        assert_eq!(estimate_dgsm(g.view(), &[], 1.0).unwrap_err(), DgsmError::ZeroD);
+        assert_eq!(
+            estimate_dgsm(g.view(), &[], 1.0).unwrap_err(),
+            DgsmError::ZeroD
+        );
     }
 
     #[test]
@@ -526,9 +537,10 @@ mod tests {
         samples[[0, 1]] = 2.0;
         samples[[0, 2]] = 3.0;
         // f(x) = x_0 + x_1 + x_2 — gradient should be [1, 1, 1].
-        let g = finite_difference_gradients(samples.view(), 1e-5, FdKind::Central, |x: &[f64]| {
-            x[0] + x[1] + x[2]
-        });
+        let g =
+            finite_difference_gradients(samples.view(), 1e-5, FdKind::Central, |x: &[f64]| {
+                x[0] + x[1] + x[2]
+            });
         for i in 0..3 {
             assert!(
                 (g[[0, i]] - 1.0).abs() < 1e-6,

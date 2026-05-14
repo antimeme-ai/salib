@@ -138,18 +138,33 @@ impl fmt::Display for WithNames<'_> {
 impl SobolIndices {
     /// Format the indices using factor names instead of numeric indices.
     pub fn display_with_names<'a>(&'a self, names: &'a [&'a str]) -> impl fmt::Display + 'a {
-        WithNames { indices: self, names }
+        WithNames {
+            indices: self,
+            names,
+        }
     }
 }
 
 impl fmt::Display for SobolIndicesWithCi {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let idx = &self.indices;
-        writeln!(f, "Sobol' indices with CI (N={}, d={}, B={})", idx.n, idx.dim, self.bootstrap_resamples)?;
+        writeln!(
+            f,
+            "Sobol' indices with CI (N={}, d={}, B={})",
+            idx.n, idx.dim, self.bootstrap_resamples
+        )?;
         writeln!(f, "  Var[Y] = {:.4}", idx.total_variance)?;
         writeln!(f)?;
-        writeln!(f, "  {:>8}  {:>8}  {:>14}  {:>8}  {:>14}", "Factor", "S1", "S1 CI", "ST", "ST CI")?;
-        writeln!(f, "  {:>8}  {:>8}  {:>14}  {:>8}  {:>14}", "------", "------", "-----------", "------", "-----------")?;
+        writeln!(
+            f,
+            "  {:>8}  {:>8}  {:>14}  {:>8}  {:>14}",
+            "Factor", "S1", "S1 CI", "ST", "ST CI"
+        )?;
+        writeln!(
+            f,
+            "  {:>8}  {:>8}  {:>14}  {:>8}  {:>14}",
+            "------", "------", "-----------", "------", "-----------"
+        )?;
         for i in 0..idx.dim {
             let (s1_lo, s1_hi) = self.first_order_ci[i];
             let (st_lo, st_hi) = self.total_order_ci[i];

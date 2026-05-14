@@ -52,9 +52,9 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::sync::Arc;
 
-use ndarray::ArrayView2;
 #[cfg(test)]
 use ndarray::Array2;
+use ndarray::ArrayView2;
 use rustfft::{num_complex::Complex, Fft, FftPlanner};
 use salib_core::tree_sum;
 
