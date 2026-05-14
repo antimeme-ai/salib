@@ -76,6 +76,7 @@ use ndarray::Array2;
 /// `#[non_exhaustive]` — future fields (per-sample gradient
 /// residuals, bootstrap CIs over eigenvalues) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct ActiveSubspace {
     /// Eigenvalues `λ_1 ≥ … ≥ λ_d ≥ 0`, length `d`. Sorted descending.

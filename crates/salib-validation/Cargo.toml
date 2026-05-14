@@ -15,12 +15,18 @@ path = "src/lib.rs"
 
 [dependencies]
 salib-core = { version = "0.1.0", path = "../salib-core" }
+serde = { version = "1", features = ["derive"], optional = true }
+
+[features]
+default = []
+serde = ["dep:serde"]
 
 [dev-dependencies]
 # Outer Gherkin TCK harness — feature files under
 # `tck/saltelli/validation/features/` are wired against
 # `salib_tck::gherkin::SyncRunner`.
 salib-tck = { version = "0.1.0", path = "../salib-tck" }
+serde_json = "1"
 
 [lints]
 workspace = true

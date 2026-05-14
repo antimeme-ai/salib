@@ -25,7 +25,7 @@ serde = { version = "1", features = ["derive"], optional = true }
 
 [features]
 default = []
-serde = ["dep:serde"]
+serde = ["dep:serde", "ndarray/serde"]
 
 [dev-dependencies]
 # For end-to-end Ishigami contract close at PR 16b: Sobol' QMC base
@@ -33,6 +33,7 @@ serde = ["dep:serde"]
 # `finite_difference_gradients` helper.
 salib-validation = { version = "0.1.0", path = "../salib-validation" }
 salib-tck = { version = "0.1.0", path = "../salib-tck" }
+serde_json = "1"
 
 [lints]
 workspace = true

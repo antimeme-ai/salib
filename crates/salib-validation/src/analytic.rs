@@ -50,6 +50,7 @@
 /// `dummy_floor: Option<f64>` (Sobol' 2007 dummy-parameter floor)
 /// and other fields land non-breaking via follow-on ADRs.
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct SobolIndicesAnalytic {
     /// `D = Var(Y)` — the total output variance.
@@ -110,6 +111,7 @@ impl SobolIndicesAnalytic {
 /// per-factor required trajectory count under Morris's significance
 /// criterion, etc.) land non-breaking.
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct MorrisEffectsAnalytic {
     /// `μ_i` per factor — signed mean elementary effect.

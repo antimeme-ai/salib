@@ -499,6 +499,8 @@ dependencies = [
  "salib-core",
  "salib-tck",
  "salib-validation",
+ "serde",
+ "serde_json",
  "thiserror",
 ]
 
@@ -512,6 +514,7 @@ dependencies = [
  "salib-tck",
  "salib-validation",
  "serde",
+ "serde_json",
  "thiserror",
 ]
 
@@ -525,6 +528,8 @@ version = "0.1.0"
 dependencies = [
  "salib-core",
  "salib-tck",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

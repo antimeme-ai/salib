@@ -42,6 +42,7 @@ use salib_core::{tree_sum, tree_var, Distribution, RngState};
 /// `#[non_exhaustive]` — future fields (per-permutation trace,
 /// bootstrap CIs, dependent-input metadata) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct ShapleyIndices {
     /// `Sh_i` per factor, length `k`. Sums to `var_y` (modulo MC

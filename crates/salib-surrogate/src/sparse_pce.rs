@@ -88,6 +88,7 @@ use crate::polynomial::{evaluate, is_in_canonical_domain, PolynomialFamily};
 /// `#[non_exhaustive]` — additional schemes (e.g., adaptive
 /// degree-by-degree per Blatman 2009 § 4) land non-breaking.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum TruncationScheme {
     /// `|α| = Σ αⱼ ≤ max_degree`. The default.
@@ -100,6 +101,7 @@ pub enum TruncationScheme {
 
 /// Sparse-solver choice. See module docstring.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum SparseSolver {
     /// Orthogonal Matching Pursuit.
@@ -115,6 +117,7 @@ pub enum SparseSolver {
 /// `#[non_exhaustive]` — future fields (per-step LOO trace,
 /// equiangular-vector norms) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct SparseFitDiagnostic {
     /// Solver used.

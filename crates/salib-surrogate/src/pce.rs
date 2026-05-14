@@ -153,6 +153,7 @@ impl PolynomialChaos {
 /// `#[non_exhaustive]` — future fields (per-multi-index variance
 /// contributions for diagnostic, `bootstrap_ci`) land non-breaking.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct SobolFromPce {
     /// First-order Sobol' indices, length `d`. `S_i ∈ [0, 1]` by
