@@ -1,0 +1,37 @@
+[package]
+name = "salib"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = """
+Global sensitivity analysis in Rust. Variance-based (Sobol'), Morris,
+FAST/eFAST/RBD-FAST, Borgonovo δ, PAWN, DGSM, regression (SRC/SRRC/PCC/PRCC),
+PCE surrogate, Shapley effects, and more. A Rust port of Python's SALib.
+"""
+keywords = ["sensitivity-analysis", "sobol", "morris", "uncertainty-quantification", "global-sensitivity"]
+categories = ["science", "mathematics"]
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+salib-core = { version = "0.1.0", path = "../salib-core" }
+salib-samplers = { version = "0.1.0", path = "../salib-samplers", optional = true }
+salib-estimators = { version = "0.1.0", path = "../salib-estimators", optional = true }
+salib-surrogate = { version = "0.1.0", path = "../salib-surrogate", optional = true }
+salib-shapley = { version = "0.1.0", path = "../salib-shapley", optional = true }
+salib-validation = { version = "0.1.0", path = "../salib-validation", optional = true }
+
+[features]
+default = ["samplers", "estimators"]
+samplers = ["dep:salib-samplers"]
+estimators = ["dep:salib-estimators"]
+surrogate = ["dep:salib-surrogate", "salib-estimators?/surrogate"]
+shapley = ["dep:salib-shapley"]
+validation = ["dep:salib-validation"]
+full = ["samplers", "estimators", "surrogate", "shapley", "validation"]
+
+[lints]
+workspace = true

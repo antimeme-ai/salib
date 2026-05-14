@@ -1,0 +1,27 @@
+[package]
+name = "salib-shapley"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = """
+Shapley effects estimator for global sensitivity analysis
+(Song-Nelson-Staum 2016).
+"""
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+salib-core = { version = "0.1.0", path = "../salib-core" }
+rand = { version = "0.9", default-features = false }
+rand_chacha = { version = "0.9", default-features = false }
+thiserror = "2"
+
+[dev-dependencies]
+salib-validation = { version = "0.1.0", path = "../salib-validation" }
+salib-tck = { version = "0.1.0", path = "../salib-tck" }
+
+[lints]
+workspace = true

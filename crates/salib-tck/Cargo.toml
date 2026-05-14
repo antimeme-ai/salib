@@ -1,0 +1,13 @@
+[package]
+name = "salib-tck"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Lightweight Gherkin parser and synchronous scenario runner for TCK test harnesses. Zero external dependencies."
+
+[dependencies]
+
+[lints]
+workspace = true

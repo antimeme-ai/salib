@@ -1,0 +1,26 @@
+[package]
+name = "salib-validation"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = """
+Analytic test functions (Ishigami, Sobol' G, Morris) with closed-form
+sensitivity indices for validation and benchmarking.
+"""
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+salib-core = { version = "0.1.0", path = "../salib-core" }
+
+[dev-dependencies]
+# Outer Gherkin TCK harness — feature files under
+# `tck/saltelli/validation/features/` are wired against
+# `salib_tck::gherkin::SyncRunner`.
+salib-tck = { version = "0.1.0", path = "../salib-tck" }
+
+[lints]
+workspace = true

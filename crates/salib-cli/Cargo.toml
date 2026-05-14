@@ -1,0 +1,28 @@
+[package]
+name = "salib-cli"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = """
+CLI binary for salib: sample, run, and analyze sensitivity analyses.
+"""
+
+[[bin]]
+name = "salib"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+salib-core = { version = "0.1.0", path = "../salib-core" }
+salib-samplers = { version = "0.1.0", path = "../salib-samplers" }
+salib-estimators = { version = "0.1.0", path = "../salib-estimators" }
+salib-validation = { version = "0.1.0", path = "../salib-validation" }
+
+[dev-dependencies]
+
+[lints]
+workspace = true

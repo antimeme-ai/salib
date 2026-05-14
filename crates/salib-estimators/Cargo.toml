@@ -1,0 +1,46 @@
+[package]
+name = "salib-estimators"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = """
+Global sensitivity analysis estimators: variance-based Sobol'
+(Saltelli2010/Jansen/Janon/Owen), Morris, FAST/eFAST/RBD-FAST,
+Borgonovo δ, PAWN, DGSM, regression (SRC/SRRC/PCC/PRCC), HDMR, and more.
+"""
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+salib-core = { version = "0.1.0", path = "../salib-core" }
+salib-samplers = { version = "0.1.0", path = "../salib-samplers" }
+ndarray = "0.16"
+rand = { version = "0.9", default-features = false }
+rand_chacha = { version = "0.9", default-features = false }
+# Apache-2.0. Used only for the forward FFT
+# in `fast::estimate_fast`; non-load-bearing on
+# determinism guarantees because the FFT is evaluated on a fixed
+# input vector and rustfft is bit-deterministic for the same input.
+rustfft = "6"
+# OLS via normal equations needs (X^T X)^-1 for SRC/PCC. statrs
+# already pulls nalgebra into the graph; we declare it explicitly
+# rather than rely on the transitive availability.
+nalgebra = "0.33"
+statrs = "0.18"
+thiserror = "2"
+salib-surrogate = { version = "0.1.0", path = "../salib-surrogate", optional = true }
+
+[features]
+default = []
+surrogate = ["dep:salib-surrogate"]
+
+[dev-dependencies]
+salib-validation = { version = "0.1.0", path = "../salib-validation" }
+salib-tck = { version = "0.1.0", path = "../salib-tck" }
+salib-surrogate = { version = "0.1.0", path = "../salib-surrogate" }
+
+[lints]
+workspace = true
