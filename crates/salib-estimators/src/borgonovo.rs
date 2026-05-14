@@ -72,6 +72,7 @@
 
 use std::cmp::Ordering;
 use std::f64::consts::PI;
+use std::fmt;
 
 use ndarray::Array2;
 use salib_core::tree_sum;
@@ -94,6 +95,19 @@ impl BorgonovoIndices {
     #[must_use]
     pub fn d(&self) -> usize {
         self.delta.len()
+    }
+}
+
+impl fmt::Display for BorgonovoIndices {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Borgonovo \u{03b4} indices (d={})", self.d())?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}", "Factor", "\u{03b4}")?;
+        writeln!(f, "  {:>8}  {:>8}", "------", "------")?;
+        for i in 0..self.d() {
+            writeln!(f, "  {:>8}  {:>8.4}", i, self.delta[i])?;
+        }
+        Ok(())
     }
 }
 

@@ -94,6 +94,8 @@
     clippy::needless_range_loop
 )]
 
+use std::fmt;
+
 use ndarray::Array2;
 use salib_core::tree_sum;
 
@@ -125,6 +127,20 @@ impl QosaIndices {
     #[must_use]
     pub fn d(&self) -> usize {
         self.s.len()
+    }
+}
+
+impl fmt::Display for QosaIndices {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "QOSA indices (d={}, \u{03b1}={:.2})", self.d(), self.alpha)?;
+        writeln!(f, "  quantile = {:.4}  CTE = {:.4}", self.global_quantile, self.global_cte)?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}", "Factor", "S")?;
+        writeln!(f, "  {:>8}  {:>8}", "------", "------")?;
+        for i in 0..self.d() {
+            writeln!(f, "  {:>8}  {:>8.4}", i, self.s[i])?;
+        }
+        Ok(())
     }
 }
 

@@ -53,6 +53,7 @@
 )]
 
 use std::cmp::Ordering;
+use std::fmt;
 
 use ndarray::Array2;
 use salib_core::tree_sum;
@@ -83,6 +84,23 @@ impl PawnIndices {
     #[must_use]
     pub fn d(&self) -> usize {
         self.median.len()
+    }
+}
+
+impl fmt::Display for PawnIndices {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "PAWN indices (d={})", self.d())?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}", "Factor", "median", "mean", "max", "min", "CV")?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}", "------", "------", "------", "------", "------", "------")?;
+        for i in 0..self.d() {
+            writeln!(
+                f,
+                "  {:>8}  {:>8.4}  {:>8.4}  {:>8.4}  {:>8.4}  {:>8.4}",
+                i, self.median[i], self.mean[i], self.maximum[i], self.minimum[i], self.cv[i]
+            )?;
+        }
+        Ok(())
     }
 }
 

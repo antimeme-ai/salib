@@ -16,6 +16,8 @@
 //! - Plackett, R. L. & Burman, J. P. (1946). "The Design of Optimum
 //!   Multifactorial Experiments." *Biometrika*, 33(4), 305–325.
 
+use std::fmt;
+
 use salib_core::Problem;
 use salib_samplers::PlackettBurmanDesign;
 
@@ -31,6 +33,23 @@ pub struct FractionalFactorialEffects {
     pub main_effects: Vec<f64>,
     /// Absolute value of each main effect (for ranking).
     pub main_effects_abs: Vec<f64>,
+}
+
+impl fmt::Display for FractionalFactorialEffects {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Fractional factorial effects (d={}, runs={})", self.dim, self.n_runs)?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>10}  {:>10}", "Factor", "Effect", "|Effect|")?;
+        writeln!(f, "  {:>8}  {:>10}  {:>10}", "------", "--------", "--------")?;
+        for i in 0..self.dim {
+            writeln!(
+                f,
+                "  {:>8}  {:>10.4}  {:>10.4}",
+                i, self.main_effects[i], self.main_effects_abs[i]
+            )?;
+        }
+        Ok(())
+    }
 }
 
 /// Estimate main effects from a Plackett-Burman design.

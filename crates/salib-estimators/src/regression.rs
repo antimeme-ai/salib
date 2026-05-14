@@ -50,6 +50,7 @@
 )]
 
 use std::cmp::Ordering;
+use std::fmt;
 
 use nalgebra::{DMatrix, DVector};
 use ndarray::Array2;
@@ -86,6 +87,24 @@ impl RegressionIndices {
     #[must_use]
     pub fn d(&self) -> usize {
         self.src.len()
+    }
+}
+
+impl fmt::Display for RegressionIndices {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Regression indices (d={})", self.d())?;
+        writeln!(f, "  R\u{00b2}(linear) = {:.4}  R\u{00b2}(rank) = {:.4}", self.r2_linear, self.r2_rank)?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}", "Factor", "SRC", "SRRC", "PCC", "PRCC")?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}  {:>8}  {:>8}", "------", "------", "------", "------", "------")?;
+        for i in 0..self.d() {
+            writeln!(
+                f,
+                "  {:>8}  {:>8.4}  {:>8.4}  {:>8.4}  {:>8.4}",
+                i, self.src[i], self.srrc[i], self.pcc[i], self.prcc[i]
+            )?;
+        }
+        Ok(())
     }
 }
 

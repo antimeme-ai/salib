@@ -48,6 +48,8 @@
     clippy::expect_used
 )]
 
+use std::fmt;
+
 use salib_core::{tree_sum, Group};
 use salib_samplers::MorrisTrajectories;
 
@@ -182,6 +184,23 @@ impl MorrisEffects {
             grouped_sigma: Some(grouped_sigma),
             group_names: Some(group_names),
         }
+    }
+}
+
+impl fmt::Display for MorrisEffects {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Morris effects (r={}, d={})", self.r, self.d)?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}  {:>8}", "Factor", "\u{03bc}", "\u{03bc}*", "\u{03c3}")?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}  {:>8}", "------", "------", "------", "------")?;
+        for i in 0..self.d {
+            writeln!(
+                f,
+                "  {:>8}  {:>8.4}  {:>8.4}  {:>8.4}",
+                i, self.mu[i], self.mu_star[i], self.sigma[i]
+            )?;
+        }
+        Ok(())
     }
 }
 

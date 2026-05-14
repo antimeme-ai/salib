@@ -73,6 +73,7 @@
 )]
 
 use std::f64::consts::PI;
+use std::fmt;
 
 use ndarray::Array2;
 use salib_core::{tree_sum, Distribution};
@@ -100,6 +101,19 @@ impl DgsmIndices {
     #[must_use]
     pub fn d(&self) -> usize {
         self.vi.len()
+    }
+}
+
+impl fmt::Display for DgsmIndices {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "DGSM indices (d={})", self.d())?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}  {:>10}", "Factor", "\u{03bd}", "ST_upper")?;
+        writeln!(f, "  {:>8}  {:>8}  {:>10}", "------", "------", "--------")?;
+        for i in 0..self.d() {
+            writeln!(f, "  {:>8}  {:>8.4}  {:>10.4}", i, self.vi[i], self.st_upper[i])?;
+        }
+        Ok(())
     }
 }
 

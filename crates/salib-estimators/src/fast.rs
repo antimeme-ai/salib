@@ -50,6 +50,7 @@
     clippy::needless_range_loop
 )]
 
+use std::fmt;
 use std::sync::Arc;
 
 use rustfft::{num_complex::Complex, Fft, FftPlanner};
@@ -86,6 +87,19 @@ impl FastIndices {
     #[must_use]
     pub fn d(&self) -> usize {
         self.s.len()
+    }
+}
+
+impl fmt::Display for FastIndices {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "FAST indices (d={})", self.d())?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}", "Factor", "S", "ST")?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}", "------", "------", "------")?;
+        for i in 0..self.d() {
+            writeln!(f, "  {:>8}  {:>8.4}  {:>8.4}", i, self.s[i], self.st[i])?;
+        }
+        Ok(())
     }
 }
 

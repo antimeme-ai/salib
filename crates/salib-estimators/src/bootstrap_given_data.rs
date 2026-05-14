@@ -86,6 +86,7 @@
 )]
 
 use std::error::Error as StdError;
+use std::fmt;
 
 use ndarray::Array2;
 use rand::RngCore;
@@ -120,6 +121,20 @@ pub struct BootstrapCi {
     /// The percentile pool is `n_resamples − n_skipped` per factor.
     /// `n_skipped == n_resamples` produces `NaN` CIs.
     pub n_skipped: usize,
+}
+
+impl fmt::Display for BootstrapCi {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let d = self.ci_low.len();
+        writeln!(f, "Bootstrap CI (B={}, \u{03b1}={:.2}, skipped={})", self.n_resamples, self.alpha, self.n_skipped)?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>10}  {:>10}", "Factor", "CI_low", "CI_high")?;
+        writeln!(f, "  {:>8}  {:>10}  {:>10}", "------", "--------", "--------")?;
+        for i in 0..d {
+            writeln!(f, "  {:>8}  {:>10.4}  {:>10.4}", i, self.ci_low[i], self.ci_high[i])?;
+        }
+        Ok(())
+    }
 }
 
 /// Errors from [`bootstrap_given_data`].

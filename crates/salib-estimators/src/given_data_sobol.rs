@@ -60,6 +60,7 @@
 )]
 
 use std::cmp::Ordering;
+use std::fmt;
 
 use ndarray::Array2;
 use salib_core::tree_sum;
@@ -85,6 +86,19 @@ impl GivenDataSobolIndices {
     #[must_use]
     pub fn d(&self) -> usize {
         self.s1.len()
+    }
+}
+
+impl fmt::Display for GivenDataSobolIndices {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Given-data Sobol' indices (d={})", self.d())?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}", "Factor", "S1")?;
+        writeln!(f, "  {:>8}  {:>8}", "------", "------")?;
+        for i in 0..self.d() {
+            writeln!(f, "  {:>8}  {:>8.4}", i, self.s1[i])?;
+        }
+        Ok(())
     }
 }
 

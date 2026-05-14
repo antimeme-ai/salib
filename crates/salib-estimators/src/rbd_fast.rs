@@ -49,6 +49,7 @@
 )]
 
 use std::cmp::Ordering;
+use std::fmt;
 use std::sync::Arc;
 
 use ndarray::Array2;
@@ -76,6 +77,19 @@ impl RbdFastIndices {
     #[must_use]
     pub fn d(&self) -> usize {
         self.s.len()
+    }
+}
+
+impl fmt::Display for RbdFastIndices {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "RBD-FAST indices (d={})", self.d())?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}", "Factor", "S")?;
+        writeln!(f, "  {:>8}  {:>8}", "------", "------")?;
+        for i in 0..self.d() {
+            writeln!(f, "  {:>8}  {:>8.4}", i, self.s[i])?;
+        }
+        Ok(())
     }
 }
 

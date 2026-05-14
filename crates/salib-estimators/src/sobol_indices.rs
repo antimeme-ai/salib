@@ -5,6 +5,8 @@
 //! convergence-rate tests can compare estimator output directly
 //! against analytic ground truth field-by-field.
 
+use std::fmt;
+
 /// Sobol' first-order and total-order indices, point-estimate.
 /// Output of `estimate_saltelli2010` and friends.
 ///
@@ -88,6 +90,77 @@ pub enum BootstrapMethod {
     /// Naive percentile bootstrap CI: take `α/2` and `1 - α/2`
     /// percentiles of the bootstrap distribution. `SALib`-compatible.
     Percentile,
+}
+
+impl fmt::Display for SobolIndices {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Sobol' indices (N={}, d={})", self.n, self.dim)?;
+        writeln!(f, "  Var[Y] = {:.4}", self.total_variance)?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}", "Factor", "S1", "ST")?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}", "------", "------", "------")?;
+        for i in 0..self.dim {
+            writeln!(
+                f,
+                "  {:>8}  {:>8.4}  {:>8.4}",
+                i, self.first_order[i], self.total_order[i]
+            )?;
+        }
+        Ok(())
+    }
+}
+
+struct WithNames<'a> {
+    indices: &'a SobolIndices,
+    names: &'a [&'a str],
+}
+
+impl fmt::Display for WithNames<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let idx = self.indices;
+        writeln!(f, "Sobol' indices (N={}, d={})", idx.n, idx.dim)?;
+        writeln!(f, "  Var[Y] = {:.4}", idx.total_variance)?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}", "Factor", "S1", "ST")?;
+        writeln!(f, "  {:>8}  {:>8}  {:>8}", "------", "------", "------")?;
+        for i in 0..idx.dim {
+            let name = self.names.get(i).copied().unwrap_or("?");
+            writeln!(
+                f,
+                "  {:>8}  {:>8.4}  {:>8.4}",
+                name, idx.first_order[i], idx.total_order[i]
+            )?;
+        }
+        Ok(())
+    }
+}
+
+impl SobolIndices {
+    /// Format the indices using factor names instead of numeric indices.
+    pub fn display_with_names<'a>(&'a self, names: &'a [&'a str]) -> impl fmt::Display + 'a {
+        WithNames { indices: self, names }
+    }
+}
+
+impl fmt::Display for SobolIndicesWithCi {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let idx = &self.indices;
+        writeln!(f, "Sobol' indices with CI (N={}, d={}, B={})", idx.n, idx.dim, self.bootstrap_resamples)?;
+        writeln!(f, "  Var[Y] = {:.4}", idx.total_variance)?;
+        writeln!(f)?;
+        writeln!(f, "  {:>8}  {:>8}  {:>14}  {:>8}  {:>14}", "Factor", "S1", "S1 CI", "ST", "ST CI")?;
+        writeln!(f, "  {:>8}  {:>8}  {:>14}  {:>8}  {:>14}", "------", "------", "-----------", "------", "-----------")?;
+        for i in 0..idx.dim {
+            let (s1_lo, s1_hi) = self.first_order_ci[i];
+            let (st_lo, st_hi) = self.total_order_ci[i];
+            writeln!(
+                f,
+                "  {:>8}  {:>8.4}  [{:.4},{:.4}]  {:>8.4}  [{:.4},{:.4}]",
+                i, idx.first_order[i], s1_lo, s1_hi, idx.total_order[i], st_lo, st_hi
+            )?;
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]
