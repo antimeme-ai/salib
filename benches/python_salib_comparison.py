@@ -1,27 +1,41 @@
 #!/usr/bin/env python3
 """
-Run Python SALib's own tests with wall-clock timing.
+Benchmark Python SALib and validate correctness.
 
-This does NOT reimplement their test logic — it calls the same functions
-with the same parameters from their test_regression.py and adds timing.
-Every expected value and tolerance is copied verbatim from SALib's test suite.
+Two modes:
+  --validate   Run SALib's regression tests (correctness check).
+  --bench      Time analysis methods at multiple N (performance comparison).
+  --json       Output JSON instead of table (combinable with either mode).
+
+Correctness tests replicate SALib's own test_regression.py exactly:
+same samplers, same seeds, same expected values, same tolerances.
+
+Timing benchmarks measure analysis time only (not sampling), at N values
+matching the Rust Criterion benchmarks, with K=20 repetitions per method.
 
 Usage:
     pip install SALib numpy
-    python benches/python_salib_comparison.py
-    python benches/python_salib_comparison.py --json > benches/python_results.json
+    python benches/python_salib_comparison.py --validate
+    python benches/python_salib_comparison.py --bench
+    python benches/python_salib_comparison.py --bench --json
 
+SALib version tested: 1.5.2
 Source of truth: github.com/SALib/SALib/blob/main/tests/test_regression.py
 """
 
 import argparse
 import json
+import statistics
 import sys
 import time
+import warnings
 
 import numpy as np
+from numpy.testing import assert_allclose
 
-# SALib imports — same as their test_regression.py
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
+
 from SALib.analyze import (
     delta,
     dgsm,
@@ -33,14 +47,14 @@ from SALib.analyze import (
 )
 from SALib.sample import (
     fast_sampler,
+    finite_diff,
     latin,
-    morris as morris_sample,
     saltelli,
 )
+from SALib.sample.morris import sample as morris_sampler
 from SALib.test_functions import Ishigami
+from SALib.util import handle_seed
 
-
-# ── Problem definitions (from SALib's test fixtures) ────────────────
 
 ISHIGAMI_PROBLEM = {
     "num_vars": 3,
@@ -48,308 +62,299 @@ ISHIGAMI_PROBLEM = {
     "bounds": [[-np.pi, np.pi]] * 3,
 }
 
-LINEAR_1_PROBLEM = {
-    "num_vars": 5,
-    "names": ["x1", "x2", "x3", "x4", "x5"],
-    "bounds": [[-1.0, 1.0]] * 5,
-}
+
+# ── Correctness validation ───────────────────────────────────────────
+# Each test replicates SALib's test_regression.py exactly:
+# same sampler, same seed mechanism, same expected values, same tolerances.
 
 
-def linear_model_1(x):
-    return x[:, 0] + x[:, 1] + x[:, 2] + x[:, 3] + x[:, 4]
-
-
-# ── Expected values — VERBATIM from SALib test_regression.py ────────
-# Tolerances: atol=5e-2, rtol=1e-1 for variance-based methods
-#             atol=0, rtol=1e-5 for Morris (seed-deterministic)
-
-EXPECTED = {
-    "saltelli_ishigami": {
-        "S1": [0.31, 0.44, 0.00],
-        "ST": [0.55, 0.44, 0.24],
-        "S2": [0.00, 0.25, 0.00],  # S2[0][1], S2[0][2], S2[1][2]
-        "atol": 5e-2,
-        "rtol": 1e-1,
-    },
-    "fast_ishigami": {
-        "S1": [0.31, 0.44, 0.00],
-        "ST": [0.55, 0.44, 0.24],
-        "atol": 5e-2,
-        "rtol": 1e-1,
-    },
-    "rbd_fast_ishigami": {
-        "S1": [0.31, 0.44, 0.00],
-        "atol": 5e-2,
-        "rtol": 1e-1,
-    },
-    "delta_ishigami": {
-        "delta": [0.210, 0.358, 0.155],
-        "S1": [0.31, 0.44, 0.00],
-        "atol": 5e-2,
-        "rtol": 1e-1,
-    },
-    "dgsm_ishigami": {
-        "dgsm": [2.229, 7.066, 3.180],
-        "atol": 5e-2,
-        "rtol": 1e-1,
-    },
-    "morris_ishigami": {
-        "mu_star": [7.682808, 7.875, 6.256295],
-        "atol": 0,
-        "rtol": 1e-5,
-    },
-    "hdmr_ishigami": {
-        "Sa": [0.31, 0.44, 0.00],
-        "ST": [0.55, 0.44, 0.24],
-        "atol": 5e-2,
-        "rtol": 1e-1,
-    },
-    "hdmr_linear1": {
-        "Sa": [0.20, 0.20, 0.20, 0.20, 0.20],
-        "ST": [0.20, 0.20, 0.20, 0.20, 0.20],
-        "atol": 5e-2,
-        "rtol": 1e-1,
-    },
-}
-
-
-def timed(fn, *args, **kwargs):
-    t0 = time.perf_counter()
-    result = fn(*args, **kwargs)
-    elapsed = time.perf_counter() - t0
-    return result, elapsed
-
-
-# ── Run each test exactly as SALib's test_regression.py does ────────
-
-def run_tests():
-    results = []
-
-    # Seeds from SALib's conftest: rng = handle_seed(12345), np.random.seed(123456)
-    # We use their N=10000 for all methods.
-
-    N = 10_000
-
-    # ── Sobol/Saltelli on Ishigami ───────────────────────────────
-    np.random.seed(123456)
-    X, t_s = timed(saltelli.sample, ISHIGAMI_PROBLEM, N)
+def validate_sobol():
+    """test_regression_sobol: saltelli sampler, no explicit seed."""
+    X = saltelli.sample(ISHIGAMI_PROBLEM, 10000, calc_second_order=True)
     Y = Ishigami.evaluate(X)
-    Si, t_a = timed(sobol.analyze, ISHIGAMI_PROBLEM, Y)
-    results.append({
-        "method": "saltelli_ishigami",
-        "N": N,
-        "evals": len(Y),
-        "sample_s": round(t_s, 4),
-        "analyze_s": round(t_a, 4),
-        "S1": Si["S1"].tolist(),
-        "ST": Si["ST"].tolist(),
-        "pass": bool(
-            np.allclose(Si["S1"], EXPECTED["saltelli_ishigami"]["S1"], atol=5e-2, rtol=1e-1)
-            and np.allclose(Si["ST"], EXPECTED["saltelli_ishigami"]["ST"], atol=5e-2, rtol=1e-1)
-        ),
-    })
+    Si = sobol.analyze(
+        ISHIGAMI_PROBLEM, Y,
+        calc_second_order=True, conf_level=0.95, print_to_console=False,
+    )
+    assert_allclose(Si["S1"], [0.31, 0.44, 0.00], atol=5e-2, rtol=1e-1)
+    assert_allclose(Si["ST"], [0.55, 0.44, 0.24], atol=5e-2, rtol=1e-1)
+    return Si
 
-    # ── FAST on Ishigami ─────────────────────────────────────────
-    np.random.seed(123456)
-    X, t_s = timed(fast_sampler.sample, ISHIGAMI_PROBLEM, N)
-    Y = Ishigami.evaluate(X)
-    Si, t_a = timed(fast.analyze, ISHIGAMI_PROBLEM, Y)
-    results.append({
-        "method": "fast_ishigami",
-        "N": N,
-        "evals": len(Y),
-        "sample_s": round(t_s, 4),
-        "analyze_s": round(t_a, 4),
-        "S1": Si["S1"].tolist(),
-        "ST": Si["ST"].tolist(),
-        "pass": bool(
-            np.allclose(Si["S1"], EXPECTED["fast_ishigami"]["S1"], atol=5e-2, rtol=1e-1)
-            and np.allclose(Si["ST"], EXPECTED["fast_ishigami"]["ST"], atol=5e-2, rtol=1e-1)
-        ),
-    })
 
-    # ── RBD-FAST on Ishigami ─────────────────────────────────────
-    np.random.seed(123456)
-    X, t_s = timed(latin.sample, ISHIGAMI_PROBLEM, N)
+def validate_fast():
+    """test_regression_fast: fast_sampler, no explicit seed."""
+    X = fast_sampler.sample(ISHIGAMI_PROBLEM, 10000)
     Y = Ishigami.evaluate(X)
-    Si, t_a = timed(rbd_fast.analyze, ISHIGAMI_PROBLEM, X, Y)
-    results.append({
-        "method": "rbd_fast_ishigami",
-        "N": N,
-        "evals": len(Y),
-        "sample_s": round(t_s, 4),
-        "analyze_s": round(t_a, 4),
-        "S1": Si["S1"].tolist(),
-        "pass": bool(
-            np.allclose(Si["S1"], EXPECTED["rbd_fast_ishigami"]["S1"], atol=5e-2, rtol=1e-1)
-        ),
-    })
+    Si = fast.analyze(ISHIGAMI_PROBLEM, Y, print_to_console=False)
+    assert_allclose(Si["S1"], [0.31, 0.44, 0.00], atol=5e-2, rtol=1e-1)
+    assert_allclose(Si["ST"], [0.55, 0.44, 0.24], atol=5e-2, rtol=1e-1)
+    return Si
 
-    # ── Delta on Ishigami ────────────────────────────────────────
-    np.random.seed(123456)
-    X, t_s = timed(latin.sample, ISHIGAMI_PROBLEM, N)
-    Y = Ishigami.evaluate(X)
-    Si, t_a = timed(delta.analyze, ISHIGAMI_PROBLEM, X, Y, num_resamples=10)
-    results.append({
-        "method": "delta_ishigami",
-        "N": N,
-        "evals": len(Y),
-        "sample_s": round(t_s, 4),
-        "analyze_s": round(t_a, 4),
-        "delta": Si["delta"].tolist(),
-        "S1": Si["S1"].tolist(),
-        "pass": bool(
-            np.allclose(Si["delta"], EXPECTED["delta_ishigami"]["delta"], atol=5e-2, rtol=1e-1)
-            and np.allclose(Si["S1"], EXPECTED["delta_ishigami"]["S1"], atol=5e-2, rtol=1e-1)
-        ),
-    })
 
-    # ── DGSM on Ishigami ────────────────────────────────────────
-    np.random.seed(123456)
-    X, t_s = timed(latin.sample, ISHIGAMI_PROBLEM, N)
+def validate_rbd_fast():
+    """test_regression_rbd_fast: latin sampler, no explicit seed."""
+    X = latin.sample(ISHIGAMI_PROBLEM, 10000)
     Y = Ishigami.evaluate(X)
-    Si, t_a = timed(dgsm.analyze, ISHIGAMI_PROBLEM, X, Y)
-    results.append({
-        "method": "dgsm_ishigami",
-        "N": N,
-        "evals": len(Y),
-        "sample_s": round(t_s, 4),
-        "analyze_s": round(t_a, 4),
-        "dgsm": Si["dgsm"].tolist(),
-        "pass": bool(
-            np.allclose(Si["dgsm"], EXPECTED["dgsm_ishigami"]["dgsm"], atol=5e-2, rtol=1e-1)
-        ),
-    })
+    Si = rbd_fast.analyze(ISHIGAMI_PROBLEM, X, Y, print_to_console=False)
+    assert_allclose(Si["S1"], [0.31, 0.44, 0.00], atol=5e-2, rtol=1e-1)
+    return Si
 
-    # ── Morris on Ishigami ───────────────────────────────────────
-    np.random.seed(123456)
-    X, t_s = timed(morris_sample.sample, ISHIGAMI_PROBLEM, N)
-    Y = Ishigami.evaluate(X)
-    Si, t_a = timed(morris_analyze.analyze, ISHIGAMI_PROBLEM, X, Y)
-    results.append({
-        "method": "morris_ishigami",
-        "N": N,
-        "evals": len(Y),
-        "sample_s": round(t_s, 4),
-        "analyze_s": round(t_a, 4),
-        "mu_star": Si["mu_star"].tolist(),
-        "pass": bool(
-            np.allclose(Si["mu_star"], EXPECTED["morris_ishigami"]["mu_star"], atol=0, rtol=1e-5)
-        ),
-    })
 
-    # ── HDMR on Ishigami ────────────────────────────────────────
-    np.random.seed(123456)
-    X, t_s = timed(latin.sample, ISHIGAMI_PROBLEM, N)
+def validate_delta():
+    """test_regression_delta: latin sampler, no explicit seed.
+    SALib 1.5.2 uses key 'delta'; main branch renamed to 'delta_raw'."""
+    X = latin.sample(ISHIGAMI_PROBLEM, 10000)
     Y = Ishigami.evaluate(X)
-    Si, t_a = timed(
-        hdmr.analyze,
+    Si = delta.analyze(
         ISHIGAMI_PROBLEM, X, Y,
-        maxorder=2, maxiter=100, m=4, K=1, R=N, alpha=0.95, lambdax=0.01,
+        num_resamples=10, conf_level=0.95, print_to_console=False,
     )
-    results.append({
-        "method": "hdmr_ishigami",
-        "N": N,
-        "evals": len(Y),
-        "sample_s": round(t_s, 4),
-        "analyze_s": round(t_a, 4),
-        "Sa": Si["Sa"].tolist(),
-        "ST": Si["ST"].tolist(),
-        "pass": bool(
-            np.allclose(Si["Sa"], EXPECTED["hdmr_ishigami"]["Sa"], atol=5e-2, rtol=1e-1)
-            and np.allclose(Si["ST"], EXPECTED["hdmr_ishigami"]["ST"], atol=5e-2, rtol=1e-1)
-        ),
-    })
+    delta_key = "delta_raw" if "delta_raw" in Si else "delta"
+    assert_allclose(Si[delta_key], [0.210, 0.358, 0.155], atol=5e-2, rtol=1e-1)
+    assert_allclose(Si["S1"], [0.31, 0.44, 0.00], atol=5e-2, rtol=1e-1)
+    return Si
 
-    # ── HDMR on Linear Model 1 ──────────────────────────────────
+
+def validate_dgsm():
+    """test_regression_dgsm: finite_diff sampler (NOT latin), no explicit seed."""
+    X = finite_diff.sample(ISHIGAMI_PROBLEM, 10000, delta=0.001)
+    Y = Ishigami.evaluate(X)
+    Si = dgsm.analyze(
+        ISHIGAMI_PROBLEM, X, Y,
+        conf_level=0.95, print_to_console=False,
+    )
+    assert_allclose(Si["dgsm"], [2.229, 7.066, 3.180], atol=5e-2, rtol=1e-1)
+    return Si
+
+
+def validate_morris():
+    """test_regression_morris_vanilla: handle_seed(12345) + np.random.seed(123456).
+    Morris is the only method that requires the dual-seed fixture."""
+    rng = handle_seed(12345)
     np.random.seed(123456)
-    X, t_s = timed(latin.sample, LINEAR_1_PROBLEM, N)
-    Y = linear_model_1(X)
-    Si, t_a = timed(
-        hdmr.analyze,
-        LINEAR_1_PROBLEM, X, Y,
-        maxorder=2, maxiter=100, m=2, K=1, R=N, alpha=0.95, lambdax=0.01,
+    X = morris_sampler(
+        ISHIGAMI_PROBLEM, 10000,
+        num_levels=4, optimal_trajectories=None, seed=rng,
     )
-    results.append({
-        "method": "hdmr_linear1",
-        "N": N,
-        "evals": len(Y),
-        "sample_s": round(t_s, 4),
-        "analyze_s": round(t_a, 4),
-        "Sa": Si["Sa"].tolist(),
-        "ST": Si["ST"].tolist(),
-        "pass": bool(
-            np.allclose(Si["Sa"], EXPECTED["hdmr_linear1"]["Sa"], atol=5e-2, rtol=1e-1)
-            and np.allclose(Si["ST"], EXPECTED["hdmr_linear1"]["ST"], atol=5e-2, rtol=1e-1)
-        ),
-    })
-
-    return results
+    Y = Ishigami.evaluate(X)
+    Si = morris_analyze.analyze(
+        ISHIGAMI_PROBLEM, X, Y,
+        conf_level=0.95, print_to_console=False, num_levels=4, seed=rng,
+    )
+    assert_allclose(Si["mu_star"], [7.682808, 7.875, 6.256295], atol=0, rtol=1e-5)
+    return Si
 
 
-# ── Convergence sweep (not from SALib — they don't have this) ────
+def validate_hdmr_ishigami():
+    """test_regression_hdmr_ishigami: latin sampler, no explicit seed."""
+    X = latin.sample(ISHIGAMI_PROBLEM, 10000)
+    Y = Ishigami.evaluate(X)
+    Si = hdmr.analyze(
+        ISHIGAMI_PROBLEM, X, Y,
+        maxorder=2, maxiter=100, m=4, K=1, R=10000,
+        alpha=0.95, lambdax=0.01, print_to_console=False,
+    )
+    n = ISHIGAMI_PROBLEM["num_vars"]
+    assert_allclose(Si["Sa"][:n], [0.31, 0.44, 0.00], atol=5e-2, rtol=1e-1)
+    assert_allclose(Si["ST"][:n], [0.55, 0.44, 0.24], atol=5e-2, rtol=1e-1)
+    return Si
 
-def run_convergence():
-    """Saltelli on Ishigami at increasing N. SALib has no equivalent."""
+
+VALIDATION_TESTS = [
+    ("sobol", validate_sobol),
+    ("fast", validate_fast),
+    ("rbd_fast", validate_rbd_fast),
+    ("delta", validate_delta),
+    ("dgsm", validate_dgsm),
+    ("morris", validate_morris),
+    ("hdmr", validate_hdmr_ishigami),
+]
+
+
+def run_validate():
     results = []
-    S1_ref = [0.3139, 0.4424, 0.0000]
-    ST_ref = [0.5576, 0.4424, 0.2437]
-    for n in [128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536]:
-        np.random.seed(0)
-        X = saltelli.sample(ISHIGAMI_PROBLEM, n)
-        Y = Ishigami.evaluate(X)
+    for name, fn in VALIDATION_TESTS:
         t0 = time.perf_counter()
-        Si = sobol.analyze(ISHIGAMI_PROBLEM, Y)
-        t_a = time.perf_counter() - t0
-        results.append({
-            "N": n,
-            "evals": len(Y),
-            "analyze_s": round(t_a, 4),
-            "S1": Si["S1"].tolist(),
-            "ST": Si["ST"].tolist(),
-            "S1_maxerr": round(float(np.max(np.abs(Si["S1"] - S1_ref))), 6),
-            "ST_maxerr": round(float(np.max(np.abs(Si["ST"] - ST_ref))), 6),
-        })
+        try:
+            fn()
+            elapsed = time.perf_counter() - t0
+            results.append({"method": name, "pass": True, "time_s": round(elapsed, 4)})
+        except AssertionError as e:
+            elapsed = time.perf_counter() - t0
+            results.append({
+                "method": name, "pass": False,
+                "time_s": round(elapsed, 4), "error": str(e),
+            })
     return results
 
+
+# ── Timing benchmarks ────────────────────────────────────────────────
+# Measure analysis time only. Sampling and model evaluation happen once
+# outside the timing loop. K repetitions, report median/min/max.
+#
+# N values match the Rust Criterion benchmarks: 1024, 4096, 8192.
+# We test only methods that overlap between Rust salib and Python SALib.
+
+BENCH_NS = [1024, 4096, 8192]
+BENCH_K = 20
+
+
+def bench_sobol(N, K):
+    X = saltelli.sample(ISHIGAMI_PROBLEM, N, calc_second_order=False)
+    Y = Ishigami.evaluate(X)
+    times = []
+    for _ in range(K):
+        t0 = time.perf_counter()
+        sobol.analyze(ISHIGAMI_PROBLEM, Y, calc_second_order=False, print_to_console=False)
+        times.append(time.perf_counter() - t0)
+    return times
+
+
+def bench_fast(N, K):
+    X = fast_sampler.sample(ISHIGAMI_PROBLEM, N)
+    Y = Ishigami.evaluate(X)
+    times = []
+    for _ in range(K):
+        t0 = time.perf_counter()
+        fast.analyze(ISHIGAMI_PROBLEM, Y, print_to_console=False)
+        times.append(time.perf_counter() - t0)
+    return times
+
+
+def bench_rbd_fast(N, K):
+    X = latin.sample(ISHIGAMI_PROBLEM, N)
+    Y = Ishigami.evaluate(X)
+    times = []
+    for _ in range(K):
+        t0 = time.perf_counter()
+        rbd_fast.analyze(ISHIGAMI_PROBLEM, X, Y, print_to_console=False)
+        times.append(time.perf_counter() - t0)
+    return times
+
+
+def bench_delta(N, K):
+    X = latin.sample(ISHIGAMI_PROBLEM, N)
+    Y = Ishigami.evaluate(X)
+    times = []
+    for _ in range(K):
+        t0 = time.perf_counter()
+        delta.analyze(
+            ISHIGAMI_PROBLEM, X, Y,
+            num_resamples=10, conf_level=0.95, print_to_console=False,
+        )
+        times.append(time.perf_counter() - t0)
+    return times
+
+
+def bench_dgsm(N, K):
+    X = finite_diff.sample(ISHIGAMI_PROBLEM, N, delta=0.001)
+    Y = Ishigami.evaluate(X)
+    times = []
+    for _ in range(K):
+        t0 = time.perf_counter()
+        dgsm.analyze(ISHIGAMI_PROBLEM, X, Y, conf_level=0.95, print_to_console=False)
+        times.append(time.perf_counter() - t0)
+    return times
+
+
+def bench_morris(N, K):
+    rng = handle_seed(12345)
+    np.random.seed(123456)
+    X = morris_sampler(
+        ISHIGAMI_PROBLEM, N,
+        num_levels=4, optimal_trajectories=None, seed=rng,
+    )
+    Y = Ishigami.evaluate(X)
+    times = []
+    for _ in range(K):
+        rng_analyze = handle_seed(12345)
+        t0 = time.perf_counter()
+        morris_analyze.analyze(
+            ISHIGAMI_PROBLEM, X, Y,
+            conf_level=0.95, print_to_console=False, num_levels=4, seed=rng_analyze,
+        )
+        times.append(time.perf_counter() - t0)
+    return times
+
+
+BENCH_METHODS = [
+    ("sobol", bench_sobol),
+    ("fast", bench_fast),
+    ("rbd_fast", bench_rbd_fast),
+    ("delta", bench_delta),
+    ("dgsm", bench_dgsm),
+    ("morris", bench_morris),
+]
+
+
+def run_bench(ns, k):
+    results = []
+    for name, fn in BENCH_METHODS:
+        for n in ns:
+            times = fn(n, k)
+            results.append({
+                "method": name,
+                "N": n,
+                "K": k,
+                "median_s": round(statistics.median(times), 6),
+                "min_s": round(min(times), 6),
+                "max_s": round(max(times), 6),
+                "mean_s": round(statistics.mean(times), 6),
+            })
+    return results
+
+
+# ── CLI ──────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run Python SALib's regression tests with timing"
+        description="Benchmark and validate Python SALib"
     )
-    parser.add_argument("--json", action="store_true")
-    parser.add_argument("--convergence", action="store_true")
+    parser.add_argument("--validate", action="store_true",
+                        help="Run SALib regression tests (correctness)")
+    parser.add_argument("--bench", action="store_true",
+                        help="Time analysis methods at multiple N")
+    parser.add_argument("--json", action="store_true",
+                        help="Output JSON instead of table")
+    parser.add_argument("--reps", type=int, default=BENCH_K,
+                        help=f"Repetitions per benchmark (default {BENCH_K})")
     args = parser.parse_args()
 
-    if args.convergence:
-        data = run_convergence()
+    if not args.validate and not args.bench:
+        parser.print_help()
+        sys.exit(1)
+
+    if args.validate:
+        data = run_validate()
         if args.json:
             json.dump(data, sys.stdout, indent=2)
+            print()
         else:
-            print(f"{'N':>6}  {'evals':>7}  {'time':>7}  {'S1 err':>8}  {'ST err':>8}")
-            print("-" * 42)
+            all_pass = all(r["pass"] for r in data)
+            print(f"{'method':<12} {'time':>8} {'result':>6}")
+            print("-" * 30)
+            for r in data:
+                mark = "OK" if r["pass"] else "FAIL"
+                print(f"{r['method']:<12} {r['time_s']:>7.3f}s {mark:>6}")
+            print(f"\n{'ALL PASS' if all_pass else 'SOME FAILURES'}")
+            if not all_pass:
+                sys.exit(1)
+
+    if args.bench:
+        data = run_bench(BENCH_NS, args.reps)
+        if args.json:
+            json.dump(data, sys.stdout, indent=2)
+            print()
+        else:
+            print(f"{'method':<12} {'N':>6} {'median':>10} {'min':>10} {'max':>10}  (K={args.reps})")
+            print("-" * 56)
             for r in data:
                 print(
-                    f"{r['N']:>6}  {r['evals']:>7}  {r['analyze_s']:>6.3f}s"
-                    f"  {r['S1_maxerr']:>8.4f}  {r['ST_maxerr']:>8.4f}"
+                    f"{r['method']:<12} {r['N']:>6}"
+                    f" {r['median_s']*1000:>9.3f}ms"
+                    f" {r['min_s']*1000:>9.3f}ms"
+                    f" {r['max_s']*1000:>9.3f}ms"
                 )
-        return
-
-    data = run_tests()
-    if args.json:
-        json.dump(data, sys.stdout, indent=2)
-    else:
-        all_pass = all(r["pass"] for r in data)
-        print(f"{'method':<25}  {'N':>6}  {'evals':>7}  {'sample':>8}"
-              f"  {'analyze':>8}  {'pass':>5}")
-        print("-" * 68)
-        for r in data:
-            mark = "OK" if r["pass"] else "FAIL"
-            print(
-                f"{r['method']:<25}  {r['N']:>6}  {r['evals']:>7}"
-                f"  {r['sample_s']:>7.3f}s  {r['analyze_s']:>7.3f}s  {mark:>5}"
-            )
-        print(f"\n{'ALL PASS' if all_pass else 'SOME FAILURES'}")
 
 
 if __name__ == "__main__":
