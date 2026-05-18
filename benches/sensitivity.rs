@@ -1,17 +1,16 @@
 #![allow(clippy::expect_used)]
 
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::f64::consts::PI;
 
 use salib::estimators::{
-    estimate_borgonovo_delta, estimate_dgsm, estimate_fast, estimate_jansen,
-    estimate_janon, estimate_morris_effects, estimate_pawn, estimate_rbd_fast,
-    estimate_regression_indices, estimate_saltelli2010, finite_difference_gradients,
-    FdKind,
+    estimate_borgonovo_delta, estimate_dgsm, estimate_fast, estimate_janon, estimate_jansen,
+    estimate_morris_effects, estimate_pawn, estimate_rbd_fast, estimate_regression_indices,
+    estimate_saltelli2010, finite_difference_gradients, FdKind,
 };
 use salib::samplers::{
-    LhsSampler, Sampler, SobolSampler, build_fast_design, build_morris_trajectories,
-    build_saltelli_matrix,
+    build_fast_design, build_morris_trajectories, build_saltelli_matrix, LhsSampler, Sampler,
+    SobolSampler,
 };
 use salib::*;
 
@@ -41,7 +40,10 @@ fn problem_ishigami() -> Problem {
 fn problem_sobol_g() -> Problem {
     let mut b = ProblemBuilder::new();
     for i in 0..8 {
-        b = b.factor(&format!("x{}", i + 1), Distribution::Uniform { lo: 0.0, hi: 1.0 });
+        b = b.factor(
+            &format!("x{}", i + 1),
+            Distribution::Uniform { lo: 0.0, hi: 1.0 },
+        );
     }
     b.build().expect("valid problem")
 }
@@ -132,8 +134,7 @@ fn bench_fast(c: &mut Criterion) {
     for n in [1025, 4097, 8193] {
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |b, &n| {
             let mut rng = RngState::from_seed([0u8; 32]);
-            let design =
-                build_fast_design(3, n, 4, &mut rng).expect("valid design");
+            let design = build_fast_design(3, n, 4, &mut rng).expect("valid design");
             b.iter(|| estimate_fast(&design, ishigami));
         });
     }

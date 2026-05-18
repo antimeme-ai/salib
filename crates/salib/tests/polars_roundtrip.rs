@@ -23,11 +23,7 @@ fn sobol_to_polars_df() {
     assert_eq!(df.height(), 3);
     assert_eq!(df.width(), 3); // factor, S1, ST
 
-    let s1 = df
-        .column("S1")
-        .unwrap()
-        .f64()
-        .unwrap();
+    let s1 = df.column("S1").unwrap().f64().unwrap();
     assert_eq!(s1.get(0).unwrap(), 0.31);
     assert_eq!(s1.get(1).unwrap(), 0.44);
     assert_eq!(s1.get(2).unwrap(), 0.00);
