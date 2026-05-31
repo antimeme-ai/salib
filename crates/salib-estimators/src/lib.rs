@@ -63,9 +63,9 @@ pub use discrepancy::{compute_discrepancy, DiscrepancyError, DiscrepancyResult};
 pub use fast::{estimate_fast, FastEstimatorError, FastIndices};
 pub use fractional_factorial::{estimate_fractional_factorial, FractionalFactorialEffects};
 pub use g_theory::{
-    bootstrap_g_theory_pir, estimate_g_theory_pir, estimate_g_theory_pir_with_bootstrap,
-    project_g_theory_d_study, DStudyPoint, GTheoryBootstrapError, GTheoryDesign, GTheoryError,
-    GTheoryResult,
+    bootstrap_g_theory_pir, d_study_surface, estimate_g_theory_pir,
+    estimate_g_theory_pir_with_bootstrap, find_minimum_design, project_g_theory_d_study,
+    DStudyPoint, DStudySurface, GTheoryBootstrapError, GTheoryDesign, GTheoryError, GTheoryResult,
 };
 pub use given_data_sobol::{estimate_given_data_sobol, GivenDataSobolError, GivenDataSobolIndices};
 #[cfg(feature = "surrogate")]
