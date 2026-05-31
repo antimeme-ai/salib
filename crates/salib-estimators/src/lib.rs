@@ -80,5 +80,8 @@ pub use pawn::{estimate_pawn, PawnError, PawnIndices};
 pub use qosa::{estimate_qosa, QosaError, QosaIndices};
 pub use rbd_fast::{estimate_rbd_fast, RbdFastError, RbdFastIndices};
 pub use regression::{estimate_regression_indices, RegressionError, RegressionIndices};
-pub use saltelli2010::{estimate_saltelli2010, estimate_saltelli2010_from_outputs};
+pub use saltelli2010::{
+    estimate_saltelli2010, estimate_saltelli2010_from_outputs,
+    estimate_saltelli2010_from_outputs_with_second_order,
+};
 pub use sobol_indices::{BootstrapMethod, SobolIndices, SobolIndicesWithCi};
