@@ -147,6 +147,83 @@ where
     }
 }
 
+/// Estimate Sobol' indices with bootstrap CIs from pre-computed model
+/// outputs. Same algorithm as [`estimate_saltelli2010_with_bootstrap`]
+/// but takes cached `fa`, `fb`, `fab` arrays instead of a model
+/// function.
+///
+/// Use this when model evaluation happens externally (e.g., LLM evals
+/// on GPU infrastructure) and Sobol analysis runs post-hoc.
+///
+/// - `fa`: model outputs on A matrix rows (`n` values).
+/// - `fb`: model outputs on B matrix rows (`n` values).
+/// - `fab`: per-factor outputs on A_Bⁱ rows. `fab[i]` has `n` values.
+/// - `resamples`: number of bootstrap draws.
+/// - `rng`: deterministic RNG for bootstrap row-index draws.
+///
+/// # Panics
+///
+/// On `resamples == 0` or mismatched array lengths.
+#[allow(clippy::many_single_char_names)]
+pub fn estimate_saltelli2010_from_outputs_with_bootstrap(
+    fa: &[f64],
+    fb: &[f64],
+    fab: &[Vec<f64>],
+    resamples: usize,
+    rng: &mut RngState,
+) -> SobolIndicesWithCi {
+    assert!(resamples > 0, "bootstrap: resamples must be ≥ 1");
+
+    let n = fa.len();
+    let d = fab.len();
+
+    let point =
+        crate::saltelli2010::estimate_saltelli2010_from_outputs(fa, fb, fab);
+
+    let mut chacha = rng.clone().into_chacha();
+    let mut s_resamples: Vec<Vec<f64>> = vec![Vec::with_capacity(resamples); d];
+    let mut st_resamples: Vec<Vec<f64>> = vec![Vec::with_capacity(resamples); d];
+
+    let mut idx = vec![0usize; n];
+    for _ in 0..resamples {
+        for slot in &mut idx {
+            *slot = (chacha.next_u32() as usize) % n;
+        }
+
+        let resampled = compute_indices_from_cached(fa, fb, fab, &idx, d);
+        for ((s_acc, st_acc), (s_v, st_v)) in
+            s_resamples.iter_mut().zip(st_resamples.iter_mut()).zip(
+                resampled
+                    .first_order
+                    .iter()
+                    .zip(resampled.total_order.iter()),
+            )
+        {
+            s_acc.push(*s_v);
+            st_acc.push(*st_v);
+        }
+    }
+
+    *rng = RngState::snapshot(&chacha, rng);
+
+    let first_order_ci: Vec<(f64, f64)> = s_resamples
+        .iter()
+        .map(|samples| percentile_ci(samples, 0.025, 0.975))
+        .collect();
+    let total_order_ci: Vec<(f64, f64)> = st_resamples
+        .iter()
+        .map(|samples| percentile_ci(samples, 0.025, 0.975))
+        .collect();
+
+    SobolIndicesWithCi {
+        indices: point,
+        first_order_ci,
+        total_order_ci,
+        bootstrap_resamples: resamples,
+        method: BootstrapMethod::Percentile,
+    }
+}
+
 /// Compute Sobol' indices on cached `fa, fb, fab` values, resampled
 /// by row-index `idx`. Internal — used by both the point estimate
 /// (`idx = 0..n`) and bootstrap (random `idx`).

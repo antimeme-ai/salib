@@ -158,6 +158,65 @@ where
     SobolIndices::new(n, d, d_var, first_order, total_order, second_order)
 }
 
+/// Estimate first-order and total-order Sobol' indices from
+/// pre-computed model outputs. Same formulas as
+/// [`estimate_saltelli2010`] (Saltelli 2010 Eq c + Jansen 1999 Eq f),
+/// but takes cached `fa`, `fb`, `fab` arrays directly instead of a
+/// model function.
+///
+/// Use this when model evaluation happens externally (e.g., LLM evals
+/// on GPU infrastructure) and Sobol analysis runs post-hoc.
+///
+/// - `fa`: model outputs evaluated on the A matrix rows (`n` values).
+/// - `fb`: model outputs evaluated on the B matrix rows (`n` values).
+/// - `fab`: per-factor model outputs on A_Bⁱ rows. `fab[i]` has `n`
+///   values for factor `i`. Length must equal `d` (factor count).
+///
+/// # Panics
+///
+/// Panics if `fa`, `fb`, or any `fab[i]` have different lengths, or if
+/// `fab` is empty.
+pub fn estimate_saltelli2010_from_outputs(
+    fa: &[f64],
+    fb: &[f64],
+    fab: &[Vec<f64>],
+) -> SobolIndices {
+    let n = fa.len();
+    let d = fab.len();
+    assert!(!fab.is_empty(), "fab must have at least one factor");
+    assert_eq!(fb.len(), n, "fb length must equal fa length");
+    for (i, fab_i) in fab.iter().enumerate() {
+        assert_eq!(fab_i.len(), n, "fab[{i}] length must equal fa length");
+    }
+
+    #[allow(clippy::cast_precision_loss)]
+    let n_f = n as f64;
+    let f0 = tree_sum(fa) / n_f;
+    let fa_sq: Vec<f64> = fa.iter().map(|x| x * x).collect();
+    let d_var = tree_sum(&fa_sq) / n_f - f0 * f0;
+
+    let mut first_order = Vec::with_capacity(d);
+    let mut total_order = Vec::with_capacity(d);
+
+    for fab_i in fab {
+        let diff: Vec<f64> = fab_i.iter().zip(fa.iter()).map(|(ab, a)| ab - a).collect();
+        let s_i_num = tree_dot(fb, &diff) / n_f;
+        let s_i = if d_var.abs() < 1e-30 { 0.0 } else { s_i_num / d_var };
+        first_order.push(s_i);
+
+        let sq_diff: Vec<f64> = fa
+            .iter()
+            .zip(fab_i.iter())
+            .map(|(a, ab)| (a - ab).powi(2))
+            .collect();
+        let s_t_i_num = tree_sum(&sq_diff) / (2.0 * n_f);
+        let s_t_i = if d_var.abs() < 1e-30 { 0.0 } else { s_t_i_num / d_var };
+        total_order.push(s_t_i);
+    }
+
+    SobolIndices::new(n, d, d_var, first_order, total_order, None)
+}
+
 /// Internal: call `model` on every row of an ndarray matrix and
 /// return the values as a flat `Vec<f64>`. Row-major iteration; same
 /// order downstream sums consume.

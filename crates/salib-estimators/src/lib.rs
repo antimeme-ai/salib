@@ -48,7 +48,9 @@ pub use anova::{
     estimate_anova_two_way_with_bootstrap, AnovaBootstrapError, AnovaError, AnovaThreeWayResult,
     AnovaTwoWayResult,
 };
-pub use bootstrap::estimate_saltelli2010_with_bootstrap;
+pub use bootstrap::{
+    estimate_saltelli2010_from_outputs_with_bootstrap, estimate_saltelli2010_with_bootstrap,
+};
 pub use bootstrap_given_data::{
     bootstrap_given_data, BootstrapCi, BootstrapGivenDataError, BoxedEstimatorError,
 };
@@ -78,5 +80,5 @@ pub use pawn::{estimate_pawn, PawnError, PawnIndices};
 pub use qosa::{estimate_qosa, QosaError, QosaIndices};
 pub use rbd_fast::{estimate_rbd_fast, RbdFastError, RbdFastIndices};
 pub use regression::{estimate_regression_indices, RegressionError, RegressionIndices};
-pub use saltelli2010::estimate_saltelli2010;
+pub use saltelli2010::{estimate_saltelli2010, estimate_saltelli2010_from_outputs};
 pub use sobol_indices::{BootstrapMethod, SobolIndices, SobolIndicesWithCi};
