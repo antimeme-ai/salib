@@ -11,8 +11,8 @@
 //!    - Apply `idx[k]` to all matrices — row-aligned resampling
 //!      preserves the `(A, B, A_Bⁱ)` relationship per Saltelli 2002 § 5.
 //!    - Estimate `S_i^(k)` and `S_T_i^(k)` per Saltelli 2010 formulas.
-//! 2. The 95% CI for `S_i` is the `[2.5%, 97.5%]` percentile of
-//!    the bootstrap distribution. Same for `S_T_i`.
+//! 2. The `(1-alpha)`-level CI for `S_i` is the `[alpha/2, 1-alpha/2]`
+//!    percentile of the bootstrap distribution. Same for `S_T_i`.
 //!
 //! # Caching: model evaluations are NOT re-run per resample
 //!
@@ -74,6 +74,7 @@ pub fn estimate_saltelli2010_with_bootstrap<F>(
     matrix: &SaltelliMatrix,
     model: F,
     resamples: usize,
+    alpha: f64,
     rng: &mut RngState,
 ) -> SobolIndicesWithCi
 where
@@ -128,14 +129,16 @@ where
 
     *rng = RngState::snapshot(&chacha, rng);
 
-    // 2.5% / 97.5% percentile per factor.
+    // Percentile CI bounds derived from alpha.
+    let lo_p = alpha / 2.0;
+    let hi_p = 1.0 - alpha / 2.0;
     let first_order_ci: Vec<(f64, f64)> = s_resamples
         .iter()
-        .map(|samples| percentile_ci(samples, 0.025, 0.975))
+        .map(|samples| percentile_ci(samples, lo_p, hi_p))
         .collect();
     let total_order_ci: Vec<(f64, f64)> = st_resamples
         .iter()
-        .map(|samples| percentile_ci(samples, 0.025, 0.975))
+        .map(|samples| percentile_ci(samples, lo_p, hi_p))
         .collect();
 
     SobolIndicesWithCi {
@@ -170,6 +173,7 @@ pub fn estimate_saltelli2010_from_outputs_with_bootstrap(
     fb: &[f64],
     fab: &[Vec<f64>],
     resamples: usize,
+    alpha: f64,
     rng: &mut RngState,
 ) -> SobolIndicesWithCi {
     assert!(resamples > 0, "bootstrap: resamples must be ≥ 1");
@@ -206,13 +210,15 @@ pub fn estimate_saltelli2010_from_outputs_with_bootstrap(
 
     *rng = RngState::snapshot(&chacha, rng);
 
+    let lo_p = alpha / 2.0;
+    let hi_p = 1.0 - alpha / 2.0;
     let first_order_ci: Vec<(f64, f64)> = s_resamples
         .iter()
-        .map(|samples| percentile_ci(samples, 0.025, 0.975))
+        .map(|samples| percentile_ci(samples, lo_p, hi_p))
         .collect();
     let total_order_ci: Vec<(f64, f64)> = st_resamples
         .iter()
-        .map(|samples| percentile_ci(samples, 0.025, 0.975))
+        .map(|samples| percentile_ci(samples, lo_p, hi_p))
         .collect();
 
     SobolIndicesWithCi {
@@ -346,6 +352,7 @@ mod tests {
             &m,
             |x| x[0] + 2.0 * x[1],
             100,
+            0.05,
             &mut bootstrap_rng,
         );
         assert_eq!(result.indices.dim, 2);
@@ -365,6 +372,7 @@ mod tests {
             &m,
             |x| x[0] + x[1].powi(2),
             200,
+            0.05,
             &mut bootstrap_rng,
         );
         for (lo, hi) in &result.first_order_ci {
@@ -385,8 +393,8 @@ mod tests {
 
         let mut r1 = RngState::from_seed([0xab; 32]);
         let mut r2 = RngState::from_seed([0xab; 32]);
-        let r1_result = estimate_saltelli2010_with_bootstrap(&m, |x| x[0] + x[1], 50, &mut r1);
-        let r2_result = estimate_saltelli2010_with_bootstrap(&m, |x| x[0] + x[1], 50, &mut r2);
+        let r1_result = estimate_saltelli2010_with_bootstrap(&m, |x| x[0] + x[1], 50, 0.05, &mut r1);
+        let r2_result = estimate_saltelli2010_with_bootstrap(&m, |x| x[0] + x[1], 50, 0.05, &mut r2);
         assert_eq!(r1_result, r2_result);
     }
 
@@ -404,10 +412,10 @@ mod tests {
         let m_large = build_saltelli_matrix(&s, 1024, false, &mut rng_large).unwrap();
         let mut br = RngState::from_seed([0xab; 32]);
         let small =
-            estimate_saltelli2010_with_bootstrap(&m_small, |x| x[0] + 2.0 * x[1], 100, &mut br);
+            estimate_saltelli2010_with_bootstrap(&m_small, |x| x[0] + 2.0 * x[1], 100, 0.05, &mut br);
         let mut br2 = RngState::from_seed([0xab; 32]);
         let large =
-            estimate_saltelli2010_with_bootstrap(&m_large, |x| x[0] + 2.0 * x[1], 100, &mut br2);
+            estimate_saltelli2010_with_bootstrap(&m_large, |x| x[0] + 2.0 * x[1], 100, 0.05, &mut br2);
         // Average CI width over factors.
         let small_width: f64 = small
             .first_order_ci
@@ -438,7 +446,7 @@ mod tests {
         let mut rng = fresh_rng();
         let m = build_saltelli_matrix(&s, 256, false, &mut rng).unwrap();
         let mut br = RngState::from_seed([0xab; 32]);
-        let result = estimate_saltelli2010_with_bootstrap(&m, |x| x[0] + 2.0 * x[1], 500, &mut br);
+        let result = estimate_saltelli2010_with_bootstrap(&m, |x| x[0] + 2.0 * x[1], 500, 0.05, &mut br);
         for i in 0..result.indices.dim {
             let s_i = result.indices.first_order[i];
             let (lo, hi) = result.first_order_ci[i];
@@ -491,5 +499,109 @@ mod tests {
         assert!(lo < hi);
         assert!(lo > 0.0 && lo < 5.0);
         assert!(hi > 95.0 && hi < 100.0);
+    }
+
+    // ── Alpha parameter for bootstrap CIs ──────────────────────────
+
+    #[test]
+    fn from_outputs_alpha_90_ci_narrower_than_95() {
+        // 90% CI (alpha=0.10) must be strictly narrower than 95% CI
+        // (alpha=0.05) on the same data and same bootstrap draws.
+        let n = 256;
+        let d = 3;
+        // Deterministic synthetic data with non-trivial variance.
+        let fa: Vec<f64> = (0..n).map(|i| 0.5 + 0.3 * (i as f64 / n as f64)).collect();
+        let fb: Vec<f64> = (0..n).map(|i| 0.4 + 0.2 * ((n - i) as f64 / n as f64)).collect();
+        let fab: Vec<Vec<f64>> = (0..d)
+            .map(|j| {
+                (0..n)
+                    .map(|i| 0.3 + 0.5 * ((i + j * 37) as f64 / (n + d * 37) as f64))
+                    .collect()
+            })
+            .collect();
+
+        let mut rng_95 = RngState::from_seed([0xcc; 32]);
+        let ci_95 = estimate_saltelli2010_from_outputs_with_bootstrap(
+            &fa, &fb, &fab, 500, 0.05, &mut rng_95,
+        );
+
+        let mut rng_90 = RngState::from_seed([0xcc; 32]);
+        let ci_90 = estimate_saltelli2010_from_outputs_with_bootstrap(
+            &fa, &fb, &fab, 500, 0.10, &mut rng_90,
+        );
+
+        // Average CI width across all factors.
+        let width_95: f64 = ci_95
+            .first_order_ci
+            .iter()
+            .map(|(lo, hi)| hi - lo)
+            .sum::<f64>()
+            / d as f64;
+        let width_90: f64 = ci_90
+            .first_order_ci
+            .iter()
+            .map(|(lo, hi)| hi - lo)
+            .sum::<f64>()
+            / d as f64;
+
+        assert!(
+            width_90 < width_95,
+            "90% CI width ({width_90}) should be narrower than 95% CI width ({width_95})"
+        );
+
+        // Same check on total-order CIs.
+        let st_width_95: f64 = ci_95
+            .total_order_ci
+            .iter()
+            .map(|(lo, hi)| hi - lo)
+            .sum::<f64>()
+            / d as f64;
+        let st_width_90: f64 = ci_90
+            .total_order_ci
+            .iter()
+            .map(|(lo, hi)| hi - lo)
+            .sum::<f64>()
+            / d as f64;
+
+        assert!(
+            st_width_90 < st_width_95,
+            "90% ST CI width ({st_width_90}) should be narrower than 95% ST CI width ({st_width_95})"
+        );
+    }
+
+    #[test]
+    fn with_bootstrap_alpha_90_ci_narrower_than_95() {
+        // Same test but for the matrix-based function.
+        let s = LhsSampler::classic(4);
+        let mut rng = fresh_rng();
+        let m = build_saltelli_matrix(&s, 256, false, &mut rng).unwrap();
+
+        let mut br_95 = RngState::from_seed([0xdd; 32]);
+        let ci_95 = estimate_saltelli2010_with_bootstrap(
+            &m, |x| x[0] + 2.0 * x[1], 500, 0.05, &mut br_95,
+        );
+
+        let mut br_90 = RngState::from_seed([0xdd; 32]);
+        let ci_90 = estimate_saltelli2010_with_bootstrap(
+            &m, |x| x[0] + 2.0 * x[1], 500, 0.10, &mut br_90,
+        );
+
+        let width_95: f64 = ci_95
+            .first_order_ci
+            .iter()
+            .map(|(lo, hi)| hi - lo)
+            .sum::<f64>()
+            / ci_95.indices.dim as f64;
+        let width_90: f64 = ci_90
+            .first_order_ci
+            .iter()
+            .map(|(lo, hi)| hi - lo)
+            .sum::<f64>()
+            / ci_90.indices.dim as f64;
+
+        assert!(
+            width_90 < width_95,
+            "90% CI width ({width_90}) should be narrower than 95% CI width ({width_95})"
+        );
     }
 }
