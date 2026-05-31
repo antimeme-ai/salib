@@ -1,6 +1,6 @@
 [package]
 name = "salib-cli"
-version = "0.1.1"
+version = "0.2.0"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
@@ -17,10 +17,10 @@ path = "src/main.rs"
 path = "src/lib.rs"
 
 [dependencies]
-salib-core = { version = "0.1.1", path = "../salib-core" }
-salib-samplers = { version = "0.1.1", path = "../salib-samplers" }
-salib-estimators = { version = "0.1.1", path = "../salib-estimators" }
-salib-validation = { version = "0.1.1", path = "../salib-validation" }
+salib-core = { version = "0.2.0", path = "../salib-core" }
+salib-samplers = { version = "0.2.0", path = "../salib-samplers" }
+salib-estimators = { version = "0.2.0", path = "../salib-estimators" }
+salib-validation = { version = "0.2.0", path = "../salib-validation" }
 
 [dev-dependencies]
 
