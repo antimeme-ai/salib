@@ -239,7 +239,7 @@ fn ishigami_bootstrap_returns_finite_cis() {
         ];
         ishigami::ishigami(&mapped)
     };
-    let result = estimate_saltelli2010_with_bootstrap(&matrix, model, 200, &mut bootstrap_rng);
+    let result = estimate_saltelli2010_with_bootstrap(&matrix, model, 200, 0.05, &mut bootstrap_rng);
     for (lo, hi) in &result.first_order_ci {
         assert!(
             lo.is_finite() && hi.is_finite() && lo <= hi,

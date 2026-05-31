@@ -1,0 +1,69 @@
+{
+  "description": "Hand-verified synthetic 4p x 3i x 2r dataset for G-theory Gate 1 validation",
+  "source": "Analytically derived via three-way crossed ANOVA EMS decomposition. All variance components verified by hand calculation.",
+  "derivation": {
+    "method": "Three-way random-effects ANOVA with Expected Mean Squares",
+    "grand_mean": 5.833333,
+    "SS": {
+      "p": 45.666667,
+      "i": 13.083333,
+      "r": 0.666667,
+      "pi": 3.583333,
+      "pr": 3.666667,
+      "ir": 0.083333,
+      "pir": 0.583333
+    },
+    "df": {
+      "p": 3,
+      "i": 2,
+      "r": 1,
+      "pi": 6,
+      "pr": 3,
+      "ir": 2,
+      "pir": 6
+    },
+    "MS": {
+      "p": 15.222222,
+      "i": 6.541667,
+      "r": 0.666667,
+      "pi": 0.597222,
+      "pr": 1.222222,
+      "ir": 0.041667,
+      "pir": 0.097222
+    },
+    "EMS_formulas": {
+      "sigma_p": "sigma_p = (MS_p - MS_pi - MS_pr + MS_pir) / (i*r)",
+      "sigma_i": "sigma_i = (MS_i - MS_pi - MS_ir + MS_pir) / (p*r)",
+      "sigma_r": "sigma_r = (MS_r - MS_pr - MS_ir + MS_pir) / (p*i)",
+      "sigma_pi": "sigma_pi = (MS_pi - MS_pir) / r",
+      "sigma_pr": "sigma_pr = (MS_pr - MS_pir) / i",
+      "sigma_ir": "sigma_ir = (MS_ir - MS_pir) / p",
+      "sigma_pir": "sigma_pir = MS_pir"
+    }
+  },
+  "design": "crossed p x i x r",
+  "shape": [4, 3, 2],
+  "data": [
+    [[4, 3], [6, 5], [5, 4]],
+    [[7, 6], [8, 8], [6, 5]],
+    [[3, 4], [5, 6], [4, 5]],
+    [[8, 7], [9, 8], [7, 7]]
+  ],
+  "expected": {
+    "sigma_p": 2.250000,
+    "sigma_i": 0.750000,
+    "sigma_r": -0.041667,
+    "sigma_pi": 0.250000,
+    "sigma_pr": 0.375000,
+    "sigma_ir": -0.013889,
+    "sigma_pir": 0.097222,
+    "g_coefficient": 0.886861,
+    "phi_coefficient": 0.814070,
+    "d_study_6_4": {
+      "n_items": 6,
+      "n_raters": 4,
+      "g_coefficient": 0.941632,
+      "phi_coefficient": 0.898752
+    }
+  }
+}

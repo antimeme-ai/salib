@@ -48,7 +48,9 @@ pub use anova::{
     estimate_anova_two_way_with_bootstrap, AnovaBootstrapError, AnovaError, AnovaThreeWayResult,
     AnovaTwoWayResult,
 };
-pub use bootstrap::estimate_saltelli2010_with_bootstrap;
+pub use bootstrap::{
+    estimate_saltelli2010_from_outputs_with_bootstrap, estimate_saltelli2010_with_bootstrap,
+};
 pub use bootstrap_given_data::{
     bootstrap_given_data, BootstrapCi, BootstrapGivenDataError, BoxedEstimatorError,
 };
@@ -61,9 +63,9 @@ pub use discrepancy::{compute_discrepancy, DiscrepancyError, DiscrepancyResult};
 pub use fast::{estimate_fast, FastEstimatorError, FastIndices};
 pub use fractional_factorial::{estimate_fractional_factorial, FractionalFactorialEffects};
 pub use g_theory::{
-    bootstrap_g_theory_pir, estimate_g_theory_pir, estimate_g_theory_pir_with_bootstrap,
-    project_g_theory_d_study, DStudyPoint, GTheoryBootstrapError, GTheoryDesign, GTheoryError,
-    GTheoryResult,
+    bootstrap_g_theory_pir, d_study_surface, estimate_g_theory_pir,
+    estimate_g_theory_pir_with_bootstrap, find_minimum_design, project_g_theory_d_study,
+    DStudyPoint, DStudySurface, GTheoryBootstrapError, GTheoryDesign, GTheoryError, GTheoryResult,
 };
 pub use given_data_sobol::{estimate_given_data_sobol, GivenDataSobolError, GivenDataSobolIndices};
 #[cfg(feature = "surrogate")]
@@ -78,5 +80,8 @@ pub use pawn::{estimate_pawn, PawnError, PawnIndices};
 pub use qosa::{estimate_qosa, QosaError, QosaIndices};
 pub use rbd_fast::{estimate_rbd_fast, RbdFastError, RbdFastIndices};
 pub use regression::{estimate_regression_indices, RegressionError, RegressionIndices};
-pub use saltelli2010::estimate_saltelli2010;
+pub use saltelli2010::{
+    estimate_saltelli2010, estimate_saltelli2010_from_outputs,
+    estimate_saltelli2010_from_outputs_with_second_order,
+};
 pub use sobol_indices::{BootstrapMethod, SobolIndices, SobolIndicesWithCi};

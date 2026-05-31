@@ -489,6 +489,71 @@ pub fn project_g_theory_d_study(
     })
 }
 
+/// A grid of D-study projections over item-count and rater-count
+/// combinations.
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct DStudySurface {
+    /// Projected reliability points, one per (n_items, n_raters) pair.
+    pub points: Vec<DStudyPoint>,
+}
+
+/// Compute a D-study surface: project G and Phi for every combination
+/// of `item_counts` and `rater_counts`.
+///
+/// Returns `item_counts.len() * rater_counts.len()` projected points
+/// in row-major order (items vary slowest, raters vary fastest).
+pub fn d_study_surface(
+    result: &GTheoryResult,
+    item_counts: &[usize],
+    rater_counts: &[usize],
+) -> Result<DStudySurface, GTheoryError> {
+    let mut points = Vec::with_capacity(item_counts.len() * rater_counts.len());
+    for &ni in item_counts {
+        for &nr in rater_counts {
+            points.push(project_g_theory_d_study(result, ni, nr)?);
+        }
+    }
+    Ok(DStudySurface { points })
+}
+
+/// Find the minimum-cost design that achieves at least `target_phi`.
+///
+/// Searches all `(n_items, n_raters)` combinations with
+/// `1 <= n_items <= max_items` and `1 <= n_raters <= max_raters`.
+/// Returns the design with the lowest `cost_fn(n_items, n_raters)`
+/// that achieves `phi_coefficient >= target_phi`, or `None` if no
+/// feasible design exists in the search grid.
+///
+/// # Cost function
+///
+/// The cost function maps `(n_items, n_raters) -> cost`. A typical
+/// cost function for eval campaigns is `n_items * n_raters * cost_per_cell`.
+pub fn find_minimum_design<F>(
+    result: &GTheoryResult,
+    target_phi: f64,
+    max_items: usize,
+    max_raters: usize,
+    cost_fn: F,
+) -> Result<Option<DStudyPoint>, GTheoryError>
+where
+    F: Fn(usize, usize) -> f64,
+{
+    let mut best: Option<(DStudyPoint, f64)> = None;
+    for ni in 1..=max_items {
+        for nr in 1..=max_raters {
+            let point = project_g_theory_d_study(result, ni, nr)?;
+            if point.phi_coefficient >= target_phi {
+                let cost = cost_fn(ni, nr);
+                if best.as_ref().is_none_or(|(_, bc)| cost < *bc) {
+                    best = Some((point, cost));
+                }
+            }
+        }
+    }
+    Ok(best.map(|(p, _)| p))
+}
+
 fn reliability_ratio(
     coefficient: &'static str,
     numerator: f64,
